@@ -1,16 +1,16 @@
 <script>
 import Icon from './Icon.svelte'
-import { faEnvelope, faListUl } from '@fortawesome/free-solid-svg-icons'
+import { faEnvelope, faExchangeAlt, faListUl } from '@fortawesome/free-solid-svg-icons'
 import { router } from 'svelte-spa-router'
 
 // Each tab stands for a whole area of the app, so it lights up for the screens
-// under it as well as for its own list. A Transactions tab belongs here too,
-// once there is a screen for it to open.
+// under it as well as for its own list.
 const isUnder = (location, paths) =>
   paths.some(path => (location === path) || location.startsWith(`${ path }/`))
 
-$: onBudget = isUnder(router.location, ['/', '/budget', '/category'])
 $: onAccounts = isUnder(router.location, ['/accounts', '/account'])
+$: onBudget = isUnder(router.location, ['/', '/budget', '/category'])
+$: onTransactions = isUnder(router.location, ['/transactions'])
 </script>
 
 <style>
@@ -67,15 +67,20 @@ $: onAccounts = isUnder(router.location, ['/accounts', '/account'])
 
 <div id="button-row-spacer"></div>
 <nav id="button-row">
+  <a class="tab" class:active={onAccounts} href="#/accounts"
+     aria-current={onAccounts ? 'page' : undefined}>
+    <span class="tab-icon"><Icon icon={faListUl} /></span>
+    <span>Accounts</span>
+  </a>
   <a class="tab" class:active={onBudget} href="#/budget"
      aria-current={onBudget ? 'page' : undefined}>
     <span class="tab-icon"><Icon icon={faEnvelope} /></span>
     <span>Budget</span>
   </a>
-  <a class="tab" class:active={onAccounts} href="#/accounts"
-     aria-current={onAccounts ? 'page' : undefined}>
-    <span class="tab-icon"><Icon icon={faListUl} /></span>
-    <span>Accounts</span>
+  <a class="tab" class:active={onTransactions} href="#/transactions"
+     aria-current={onTransactions ? 'page' : undefined}>
+    <span class="tab-icon"><Icon icon={faExchangeAlt} /></span>
+    <span>Transactions</span>
   </a>
   {#if $$slots.default}
     <slot />
