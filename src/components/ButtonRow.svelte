@@ -1,6 +1,6 @@
 <script>
 import Icon from './Icon.svelte'
-import { faEnvelope, faExchangeAlt, faListUl } from '@fortawesome/free-solid-svg-icons'
+import { faEnvelope, faExchangeAlt, faPiggyBank } from '@fortawesome/free-solid-svg-icons'
 import { router } from 'svelte-spa-router'
 
 // Each tab stands for a whole area of the app, so it lights up for the screens
@@ -69,7 +69,7 @@ $: onTransactions = isUnder(router.location, ['/transactions'])
 <nav id="button-row">
   <a class="tab" class:active={onAccounts} href="#/accounts"
      aria-current={onAccounts ? 'page' : undefined}>
-    <span class="tab-icon"><Icon icon={faListUl} /></span>
+    <span class="tab-icon"><Icon icon={faPiggyBank} /></span>
     <span>Accounts</span>
   </a>
   <a class="tab" class:active={onBudget} href="#/budget"
