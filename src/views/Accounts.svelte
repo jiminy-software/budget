@@ -1,9 +1,9 @@
 <script>
 import { listAccounts } from '../data/accounts'
 import Button from '../components/Button.svelte'
-import ErrorMessage from '../components/ErrorMessage.svelte'
 import ButtonRow from '../components/ButtonRow.svelte'
 import Icon from '../components/Icon.svelte'
+import ScreenHeader from '../components/ScreenHeader.svelte'
 import { faChevronRight, faDollarSign, faPlus } from '@fortawesome/free-solid-svg-icons'
 import { onMount } from 'svelte'
 
@@ -15,22 +15,6 @@ onMount(async () => {
 </script>
 
 <style>
-/* As on the budget overview, the header runs edge to edge and so has to escape
-   the padding and top margin of the app-wide container. */
-.accounts-header {
-  background: var(--primary);
-  color: var(--on-primary);
-  margin: -1rem calc(var(--bs-gutter-x) * -0.5) 0;
-  padding: 18px 20px;
-}
-
-.accounts-header h2 {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin: 0;
-}
-
 .account-list {
   display: flex;
   flex-direction: column;
@@ -91,11 +75,7 @@ onMount(async () => {
 }
 </style>
 
-<header class="accounts-header">
-  <h2>Accounts</h2>
-</header>
-
-<ErrorMessage />
+<ScreenHeader title="Accounts" />
 
 <div class="account-list">
   {#each accounts as { name, _id } (_id)}
