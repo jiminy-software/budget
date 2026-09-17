@@ -14,8 +14,7 @@ Decisions settled on 2026-09-14:
 - Created from the existing expense flow: a "Repeats monthly" switch on the
   Review screen, likely to become a no/weekly/monthly/yearly choice later. The
   Review screen's Date is the first occurrence.
-- Seen and stopped from the Transactions screen, which does not exist yet and
-  is built first, as its own piece of work. The detail screen is the Review
+- Seen and stopped from the Transactions screen. The detail screen is the Review
   screen showing the stored recurring expense.
 - A new document type, not a flag on transactions: every transaction field
   except `timestamp`, plus `recurs` and `nextDue` (`YYYY-MM-DD`). No
@@ -81,7 +80,7 @@ transaction and shows in the account and category histories like any other.
 
 ## Prerequisite: the Transactions screen
 
-Built first, separately. What this feature needs from it:
+Built first, separately (now done). What this feature needs from it:
 
 - A Transactions tab in the bottom bar (`src/components/ButtonRow.svelte`
   already anticipates one) and the screen it opens.
