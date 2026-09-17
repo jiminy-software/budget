@@ -148,9 +148,7 @@ When(
 );
 
 When('I open {string} from the budget overview', async function (name) {
-  await this.openApp('/budget');
-  await this.waitForBudgetOverview();
-  await this.clickByText('.category-list .category-name', name);
+  await this.openCategoryDetails(name);
 });
 
 Then('I should see the category view for {string}', async function (name) {

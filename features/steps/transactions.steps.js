@@ -41,23 +41,13 @@ When('I open the Transactions tab', async function () {
   await this.waitForHeadingStartingWith('Transactions');
 });
 
-Then(/^I should see an? \$([0-9.]+) transaction$/, async function (dollars) {
-  const expected = formatDollars(dollars);
-  try {
-    await this.page.waitForFunction(
-      (amount) =>
-        [...document.querySelectorAll('.transaction-row .transaction-amount')]
-          .some((el) => el.textContent.trim() === amount),
-      { timeout: 5000 },
-      expected
-    );
-  } catch (e) {
-    const rows = await this.readTransactionRows();
-    throw new Error(
-      `Expected a ${expected} transaction, but the list shows ${describeRows(rows)}`
-    );
+// The optional date is the compact form the list shows, e.g. "3/1/26".
+Then(
+  /^I should see an? \$([0-9,.]+) transaction(?: dated (\S+))?$/,
+  async function (dollars, date) {
+    await this.waitForTransactionRow({ amount: formatDollars(dollars), date });
   }
-});
+);
 
 // "Bakery", then "Farm Stand", then "Corner Store": every row, top to bottom.
 Then(

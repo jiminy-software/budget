@@ -1,12 +1,15 @@
 // Turns the words a scenario uses into the values a document stores, or the
 // text the screen shows. Shared by every step file.
 
-const dollarsToCents = (dollars) => Math.round(Number(dollars) * 100);
+// Amounts in a scenario may carry thousands separators: "$1,200.00".
+const parseDollars = (dollars) => Number(String(dollars).replace(/,/g, ''));
+
+const dollarsToCents = (dollars) => Math.round(parseDollars(dollars) * 100);
 
 // How the app formats an amount of cents: "$1,234.56".
 const formatDollars = (dollars) =>
   '$' +
-  Number(dollars).toLocaleString('en-US', {
+  parseDollars(dollars).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

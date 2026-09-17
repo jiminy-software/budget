@@ -33,6 +33,28 @@ class CustomWorld {
     }
   }
 
+  // Fixes the date every page the browser loads from now on believes it is:
+  // local noon on the given day. Registered before the app is opened; if it
+  // already is, a reload brings the shim into effect.
+  async freezeClockAt(dateString) {
+    await this.page.evaluateOnNewDocument((date) => {
+      const RealDate = Date;
+      const fixed = new RealDate(`${date}T12:00:00`).getTime();
+      function FrozenDate(...args) {
+        if (!(this instanceof FrozenDate)) return String(new RealDate(fixed));
+        return args.length ? new RealDate(...args) : new RealDate(fixed);
+      }
+      FrozenDate.prototype = RealDate.prototype;
+      FrozenDate.now = () => fixed;
+      FrozenDate.parse = RealDate.parse;
+      FrozenDate.UTC = RealDate.UTC;
+      window.Date = FrozenDate;
+    }, dateString);
+    if (this.page.url().startsWith(BASE_URL)) {
+      await this.page.reload({ waitUntil: 'networkidle0' });
+    }
+  }
+
   // Resolves once the service worker is not just registered but activated and
   // in charge of the page. A worker only becomes a client's controller after
   // it activates, which happens after its install step has finished
@@ -215,6 +237,35 @@ class CustomWorld {
     await handle.asElement().click();
   }
 
+  async openCategoryDetails(name) {
+    await this.openApp('/budget');
+    await this.waitForBudgetOverview();
+    await this.clickByText('.category-list .category-name', name);
+    await this.waitForHeadingStartingWith(name);
+  }
+
+  // The review screen's date is a native date input, so set it directly and
+  // fire the change event the screen listens for.
+  async setReviewDate(dateString) {
+    await this.page.$eval(
+      'input[type="date"]',
+      (el, value) => {
+        el.value = value;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      },
+      dateString
+    );
+  }
+
+  async turnOnRepeatsMonthly() {
+    try {
+      await this.page.waitForSelector('#repeats-monthly', { timeout: 5000 });
+    } catch (e) {
+      throw new Error('The review screen has no "Repeats monthly" switch.');
+    }
+    await this.page.click('#repeats-monthly');
+  }
+
   // Renaming is still a browser prompt(), so answer the next one. Register
   // this before the click that opens it.
   answerNextPrompt(text) {
@@ -252,15 +303,44 @@ class CustomWorld {
     await input.type(String(cents));
   }
 
-  // The payee and amount of each row of the transaction list on screen, top
-  // to bottom.
+  // The date, payee and amount of each row of the transaction list on
+  // screen, top to bottom.
   async readTransactionRows() {
     return this.page.evaluate(() =>
       [...document.querySelectorAll('.transaction-row')].map((row) => ({
+        date: row.querySelector('.transaction-date').textContent.trim(),
         who: row.querySelector('.transaction-who').textContent.trim(),
         amount: row.querySelector('.transaction-amount').textContent.trim(),
       }))
     );
+  }
+
+  // Waits for a row showing the given amount (as the app formats it, e.g.
+  // "$1,200.00") and, if given, the given compact date (e.g. "3/1/26").
+  async waitForTransactionRow({ amount, date }) {
+    try {
+      await this.page.waitForFunction(
+        (amt, dt) =>
+          [...document.querySelectorAll('.transaction-row')].some(
+            (row) =>
+              row.querySelector('.transaction-amount').textContent.trim() === amt &&
+              (!dt || row.querySelector('.transaction-date').textContent.trim() === dt)
+          ),
+        { timeout: 5000 },
+        amount,
+        date || null
+      );
+    } catch (e) {
+      const rows = await this.readTransactionRows();
+      const shown =
+        rows.length === 0
+          ? 'no transactions'
+          : rows.map((r) => `${r.date} "${r.who}" ${r.amount}`).join(', ');
+      throw new Error(
+        `Expected a ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
+          `but the list shows ${shown}`
+      );
+    }
   }
 
   async readRemainingShownFor(categoryName) {
