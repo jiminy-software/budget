@@ -3,6 +3,7 @@ import { formatDateCompact } from '../helpers/dates'
 import { formatMoney } from '../helpers/numbers'
 
 export let transactions = []
+export let emptyMessage = 'No matching transactions found.'
 </script>
 
 <style>
@@ -63,6 +64,6 @@ export let transactions = []
       <span class="transaction-amount">{ formatMoney(amountTotal) }</span>
     </div>
   {:else}
-    <p class="no-transactions">No matching transactions found.</p>
+    <p class="no-transactions">{ emptyMessage }</p>
   {/each}
 </div>
