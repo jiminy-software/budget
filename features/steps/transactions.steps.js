@@ -16,11 +16,12 @@ const describeRows = (rows) =>
 // an optional payee (at "Corner Store") before the account and an optional
 // day (dated yesterday) after it. An account or category the scenario has not
 // seeded is seeded here, the category with $100.00 budgeted and remaining.
+// A payee left unnamed is "Somewhere", since the app shows the payee.
 Given(
   /^an? \$([0-9.]+) "([^"]*)" expense(?: at "([^"]*)")? from "([^"]*)"(?: dated (.+))?$/,
   async function (dollars, category, who, account, day) {
     await this.seedTransaction({
-      who: who || '',
+      who: who || 'Somewhere',
       accountId: await this.ensureAccount(account),
       categoryId: await this.ensureCategory(category),
       amountTotal: dollarsToCents(dollars),
