@@ -58,22 +58,24 @@ Decisions settled on 2026-09-14:
 
 A new list, `_id` prefix `r`, to go into the budget-data spec as 2.1.0:
 
-    [
-      {
-        "id": "*recurring transaction id*",
-        "accountId": "*account id*",
-        "amountTotal": *transaction total, in cents*,
-        "categoryAmounts": {
-          "*category id*": *amount from this category, in cents*,
-          *...*
-        },
-        "nextDue": "*YYYY-MM-DD, the next date this is to be recorded*",
-        "note": "*optional textual comment about this transaction*",
-        "recurs": "*how often it repeats; only 'monthly' so far*",
-        "who": "*name of payee*"
-      },
+```json
+[
+  {
+    "id": "*recurring transaction id*",
+    "accountId": "*account id*",
+    "amountTotal": *transaction total, in cents*,
+    "categoryAmounts": {
+      "*category id*": *amount from this category, in cents*,
       *...*
-    ]
+    },
+    "nextDue": "*YYYY-MM-DD, the next date this is to be recorded*",
+    "note": "*optional textual comment about this transaction, to be included on each transaction created from this recurring transaction*",
+    "recurs": "*how often it repeats; only 'monthly' so far*",
+    "who": "*name of payee*"
+  },
+  *...*
+]
+```
 
 Transactions are unchanged. A recorded recurring expense is an ordinary
 transaction and shows in the account and category histories like any other.
@@ -88,12 +90,12 @@ Built first, separately (now done). What this feature needs from it:
   Without that, a recurring expense could be set up but never seen or
   stopped, so this feature does not ship before it.
 
-## Phase 1: scenarios
+## Phase 1: test scenarios to consider, adding some
 
 Gherkin first, approved verbatim, then the step definitions, run red.
 
 - [ ] Scenarios for: setting one up from the expense flow; one due today is
-  recorded at load and shows in the category balance and the account history;
+  recorded right away and shows in the list of transactions;
   one due in the future is not; one missed for two months is recorded for
   each; a day the next month lacks; deleting one stops it.
 - [ ] Dates in scenarios: relative ("due yesterday"), matching the refill
