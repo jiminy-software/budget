@@ -92,3 +92,30 @@ export const getMonthProgress = (when = new Date()) => {
     daysLeft: daysInMonth - when.getDate(),
   }
 }
+
+export const getTodayISO8601 = () => formatDateISO8601(Date.now())
+
+/**
+ * The timestamp for local noon on the given yyyy-mm-dd date. Noon rather than
+ * midnight, so a shift of a few hours either way cannot move the date to
+ * another day.
+ *
+ * @param isoDate
+ * @returns {number}
+ */
+export const getNoonTimestamp = isoDate => new Date(`${isoDate} 12:00:00`).getTime()
+
+/**
+ * The same day of the following month, or that month's last day if it has no
+ * such day: 2026-01-31 gives 2026-02-28. The clamped day is what a later call
+ * sees, so it carries forward (then 2026-03-28).
+ *
+ * @param isoDate
+ * @returns {string}
+ */
+export const getSameDayNextMonth = isoDate => {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  // Date months are 0-based, so `month` is already the index of the next one.
+  const daysInNextMonth = new Date(year, month + 1, 0).getDate()
+  return formatDateISO8601(new Date(year, month, Math.min(day, daysInNextMonth)).getTime())
+}

@@ -1,5 +1,6 @@
 <script>
 import { refillBudgetCategories } from './data/budget'
+import { recordDueRecurringTransactions } from './data/recurringTransactions'
 import { checkLocalStorageForData } from './data/migration'
 import { setError } from './data/errors'
 import Router from 'svelte-spa-router'
@@ -9,6 +10,7 @@ import database from './data/database'
 const startUp = async () => {
   try {
     await refillBudgetCategories()
+    await recordDueRecurringTransactions()
     await checkLocalStorageForData()
   } catch (error) {
     setError('The app could not start cleanly', error.message)
@@ -23,9 +25,10 @@ const startUp = async () => {
   // }
 }
 
-// The refill has to finish before anything renders: views read category
-// balances as they mount, and a child mounts before its parent, so a view
-// rendered alongside this would show pre-refill amounts.
+// The refill, and the recurring expenses it makes room for, have to finish
+// before anything renders: views read category balances as they mount, and a
+// child mounts before its parent, so a view rendered alongside this would
+// show pre-refill amounts.
 const startedUp = startUp()
 </script>
 
