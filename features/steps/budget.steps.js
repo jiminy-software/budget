@@ -5,6 +5,14 @@ const {
   wordToNumber,
   yearMonthMonthsAgo,
 } = require('../support/conversions');
+const {
+  chooseAccount,
+  completeReview,
+  enterAmount,
+  putFullAmountInCategory,
+  sayItWasPaidTo,
+  startExpense,
+} = require('../support/expense-flow');
 
 Given('the app is running', async function () {
   await this.launch();
@@ -99,41 +107,6 @@ Given(
     });
   }
 );
-
-// One function per screen of the expense flow, so the scenario that walks it
-// a step at a time and the one that records an expense in a single step drive
-// the app through exactly the same sequence.
-const startExpense = async (world) => {
-  await world.openApp('/expense/new');
-  await world.page.waitForSelector('#who');
-};
-
-const sayItWasPaidTo = async (world, who) => {
-  await world.page.type('#who', who);
-  await world.clickNamedButton('next');
-  await world.waitForHeadingStartingWith('Paid using');
-};
-
-const chooseAccount = async (world, name) => {
-  await world.clickByText('.picker-row', name);
-  await world.waitForHeadingStartingWith('Amount');
-};
-
-const enterAmount = async (world, cents) => {
-  await world.typeIntoAmountInput(cents);
-  await world.clickNamedButton('next');
-  await world.waitForHeadingStartingWith('Category');
-};
-
-const putFullAmountInCategory = async (world, name) => {
-  await world.clickByText('.picker-row', name);
-  await world.waitForHeadingStartingWith('Review');
-};
-
-const completeReview = async (world) => {
-  await world.clickNamedButton('done');
-  await world.waitForBudgetOverview();
-};
 
 When('I start a new expense', async function () {
   await startExpense(this);
