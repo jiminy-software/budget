@@ -4,9 +4,10 @@ import ButtonRow from '../components/ButtonRow.svelte'
 import CategoryTags from '../components/CategoryTags.svelte'
 import DetailHeader from '../components/DetailHeader.svelte'
 import { getAccount } from '../data/accounts'
+import { savePendingRecurringTransaction } from '../data/recurringTransactions'
 import { savePendingTransaction, transactionInProgress, updatePendingTransaction } from '../data/transactions'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
-import { formatDateISO8601 } from '../helpers/dates'
+import { formatDateISO8601, getNoonTimestamp } from '../helpers/dates'
 import { formatMoney } from '../helpers/numbers'
 import { push } from 'svelte-spa-router'
 
@@ -17,6 +18,7 @@ $: transactionNote = transaction.note || ''
 $: loadAccount(transaction.accountId)
 $: accountName = account.name || ''
 $: amountTotal = transaction.amountTotal || 0
+$: repeatsMonthly = transaction.recurs === 'monthly'
 
 const loadAccount = async (accountId) => {
   if (accountId) {
@@ -25,8 +27,16 @@ const loadAccount = async (accountId) => {
 }
 
 const onDone = async () => {
-  await savePendingTransaction()
+  if (repeatsMonthly) {
+    await savePendingRecurringTransaction()
+  } else {
+    await savePendingTransaction()
+  }
   push(`/budget`)
+}
+
+const setRecurs = event => {
+  updatePendingTransaction({ recurs: event.target.checked ? 'monthly' : null })
 }
 
 const setNote = event => {
@@ -35,9 +45,7 @@ const setNote = event => {
 }
 
 const setTimestamp = event => {
-  let dateString = event.target.value
-  let when = new Date(`${dateString} 12:00:00`)
-  updatePendingTransaction({ timestamp: when.getTime() })
+  updatePendingTransaction({ timestamp: getNoonTimestamp(event.target.value) })
 }
 </script>
 
@@ -140,6 +148,41 @@ const setTimestamp = event => {
   color: var(--outline);
   font-weight: 500;
 }
+
+/* A checkbox drawn as a switch: the track is the input, the knob its
+   pseudo-element. */
+.switch {
+  appearance: none;
+  background: var(--outline-variant);
+  border: 0;
+  border-radius: 13px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 26px;
+  margin: 0;
+  position: relative;
+  width: 44px;
+}
+
+.switch::after {
+  background: var(--surface-container-lowest);
+  border-radius: 50%;
+  content: '';
+  height: 20px;
+  left: 3px;
+  position: absolute;
+  top: 3px;
+  transition: transform 0.15s;
+  width: 20px;
+}
+
+.switch:checked {
+  background: var(--primary-container);
+}
+
+.switch:checked::after {
+  transform: translateX(18px);
+}
 </style>
 
 <DetailHeader title="Review" backUrl="#/expense/category/" />
@@ -160,9 +203,14 @@ const setTimestamp = event => {
       <a class="detail-value" href="#/expense/account/">{ accountName }</a>
     </div>
     <div class="detail-row">
-      <span class="detail-label">Date</span>
+      <span class="detail-label">{ repeatsMonthly ? 'First on' : 'Date' }</span>
       <input class="detail-value detail-input detail-date" type="date" aria-label="Date"
              on:change={setTimestamp} value={formatDateISO8601(transaction.timestamp)} />
+    </div>
+    <div class="detail-row">
+      <label class="detail-label" for="repeats-monthly">Repeats monthly</label>
+      <input class="switch" type="checkbox" id="repeats-monthly"
+             checked={repeatsMonthly} on:change={setRecurs} />
     </div>
     <div class="detail-row">
       <span class="detail-label">Note</span>
