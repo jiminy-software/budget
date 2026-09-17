@@ -1,9 +1,18 @@
 const { setWorldConstructor } = require('@cucumber/cucumber');
 const puppeteer = require('puppeteer');
+const { randomUUID } = require('crypto');
+const { yearMonthMonthsAgo } = require('./conversions');
 
 const BASE_URL = 'http://localhost:5000';
 
 class CustomWorld {
+  constructor() {
+    // The accounts and categories seeded so far, by the name the scenario
+    // gave them, so a later step can refer to one by that name.
+    this.accountIds = {};
+    this.categoryIds = {};
+  }
+
   async launch() {
     if (!this.browser) {
       this.browser = await puppeteer.launch({
@@ -81,6 +90,79 @@ class CustomWorld {
   async seed(doc) {
     await this.ensureAppLoaded();
     await this.page.evaluate((d) => window.__budgetDb.put(d), doc);
+  }
+
+  async seedAccount(name) {
+    const id = `a-${randomUUID()}`;
+    await this.seed({ _id: id, name });
+    this.accountIds[name] = id;
+    return id;
+  }
+
+  async seedCategory(name, { budgeted, remaining, refilled }) {
+    const id = `c-${randomUUID()}`;
+    await this.seed({ _id: id, name, budgeted, remaining, refilled });
+    this.categoryIds[name] = id;
+    return id;
+  }
+
+  // The account named, seeded if the scenario has not seeded it itself.
+  async ensureAccount(name) {
+    return this.accountIds[name] || this.seedAccount(name);
+  }
+
+  // As ensureAccount; a category seeded here has $100.00 budgeted and
+  // remaining, refilled this month.
+  async ensureCategory(name) {
+    return (
+      this.categoryIds[name] ||
+      this.seedCategory(name, {
+        budgeted: 10000,
+        remaining: 10000,
+        refilled: yearMonthMonthsAgo(0),
+      })
+    );
+  }
+
+  async seedTransaction({ who, accountId, categoryId, amountTotal, timestamp }) {
+    await this.seed({
+      _id: `t-${randomUUID()}`,
+      who,
+      accountId,
+      amountTotal,
+      categoryAmounts: { [categoryId]: amountTotal },
+      timestamp,
+    });
+  }
+
+  // How many documents of one type (by _id prefix) the app's database holds.
+  async countDocs(prefix) {
+    await this.ensureAppLoaded();
+    return this.page.evaluate(async (p) => {
+      const response = await window.__budgetDb.allDocs({
+        startkey: `${p}-`,
+        endkey: `${p}-\ufff0`,
+      });
+      return response.rows.length;
+    }, prefix);
+  }
+
+  // The bottom bar is part of every screen of the running app, so the app
+  // has to be open before a tab can be tapped.
+  async openTab(label) {
+    await this.ensureAppLoaded();
+    await this.page.waitForSelector('#button-row .tab');
+    const tabs = await this.page.evaluate(() =>
+      [...document.querySelectorAll('#button-row .tab')].map((el) =>
+        el.textContent.trim()
+      )
+    );
+    if (!tabs.includes(label)) {
+      throw new Error(
+        `There is no "${label}" tab in the bottom bar; it has: ${tabs.join(', ')}`
+      );
+    }
+    await this.clickByText('#button-row .tab', label);
   }
 
   // Buttons rendered by Button.svelte have ids like "button-next".
@@ -168,6 +250,17 @@ class CustomWorld {
     const input = await this.page.waitForSelector('input[type="tel"]');
     await input.click();
     await input.type(String(cents));
+  }
+
+  // The payee and amount of each row of the transaction list on screen, top
+  // to bottom.
+  async readTransactionRows() {
+    return this.page.evaluate(() =>
+      [...document.querySelectorAll('.transaction-row')].map((row) => ({
+        who: row.querySelector('.transaction-who').textContent.trim(),
+        amount: row.querySelector('.transaction-amount').textContent.trim(),
+      }))
+    );
   }
 
   async readRemainingShownFor(categoryName) {

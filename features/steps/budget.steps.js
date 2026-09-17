@@ -1,14 +1,10 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
-const { randomUUID } = require('crypto');
-
-// Category refill months are "yyyy-mm" strings (see src/helpers/dates.js).
-const yearMonthMonthsAgo = (monthsAgo) => {
-  const now = new Date();
-  const then = new Date(now.getFullYear(), now.getMonth() - monthsAgo);
-  const month = String(then.getMonth() + 1).padStart(2, '0');
-  return `${then.getFullYear()}-${month}`;
-};
+const {
+  dollarsToCents,
+  wordToNumber,
+  yearMonthMonthsAgo,
+} = require('../support/conversions');
 
 Given('the app is running', async function () {
   await this.launch();
@@ -27,8 +23,6 @@ Then('I should see the current month as the heading', async function () {
   });
   assert.strictEqual(heading, expected);
 });
-
-const dollarsToCents = (dollars) => Math.round(Number(dollars) * 100);
 
 When('I go to the new category page', async function () {
   await this.openApp('/category/new');
@@ -83,9 +77,7 @@ Given(
   /^a budget category "([^"]*)" with \$([0-9.]+) budgeted and remaining$/,
   async function (name, dollars) {
     const cents = dollarsToCents(dollars);
-    await this.seed({
-      _id: `c-${randomUUID()}`,
-      name,
+    await this.seedCategory(name, {
       budgeted: cents,
       remaining: cents,
       refilled: yearMonthMonthsAgo(0),
@@ -94,34 +86,16 @@ Given(
 );
 
 Given('an account named {string}', async function (name) {
-  await this.seed({ _id: `a-${randomUUID()}`, name });
+  await this.seedAccount(name);
 });
-
-const monthsWordToNumber = {
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-  eleven: 11,
-  twelve: 12,
-};
 
 Given(
   /^a budget category "([^"]*)" with \$([0-9.]+) budgeted per month, \$([0-9.]+) remaining, last refilled (\w+) months? ago$/,
   async function (name, budgetedDollars, remainingDollars, monthsAgoWord) {
-    const monthsAgo = monthsWordToNumber[monthsAgoWord] ?? Number(monthsAgoWord);
-    await this.seed({
-      _id: `c-${randomUUID()}`,
-      name,
+    await this.seedCategory(name, {
       budgeted: dollarsToCents(budgetedDollars),
       remaining: dollarsToCents(remainingDollars),
-      refilled: yearMonthMonthsAgo(monthsAgo),
+      refilled: yearMonthMonthsAgo(wordToNumber(monthsAgoWord)),
     });
   }
 );
