@@ -442,6 +442,46 @@ class CustomWorld {
     }
   }
 
+  // Opens the recurring expense the given amount identifies, from the list on
+  // the Transactions screen.
+  async openRecurringExpense(amount) {
+    await this.waitForRecurringRow({ amount });
+    await this.page.evaluate((amt) => {
+      [...document.querySelectorAll('.recurring-row')]
+        .find(
+          (row) =>
+            row.querySelector('.recurring-amount').textContent.trim() === amt
+        )
+        .click();
+    }, amount);
+  }
+
+  // Everything the recurring expense screen shows, so one step can check it
+  // all and say what was wrong.
+  async readRecurringDetail() {
+    return this.page.evaluate(() => {
+      const textOf = (selector) => {
+        const element = document.querySelector(selector);
+        return element ? element.textContent.trim() : null;
+      };
+      return {
+        who: textOf('.payee'),
+        amount: textOf('.total'),
+        repeats: textOf('.repeats-value'),
+        nextDue: textOf('.next-due-value'),
+        // Each tag reads "Housing · $1,200.00".
+        categories: [...document.querySelectorAll('.category-tag')].map((tag) =>
+          tag.textContent.trim()
+        ),
+      };
+    });
+  }
+
+  // As answerNextPrompt, for the confirm() a delete opens.
+  acceptNextConfirm() {
+    this.page.once('dialog', (dialog) => dialog.accept());
+  }
+
   describeRecurringRows(rows) {
     return rows.length === 0
       ? 'no recurring expenses'

@@ -42,3 +42,21 @@ Feature: Recurring transactions
       And I choose "Show recurring" from the menu
       And I choose "Hide recurring" from the menu
     Then I should NOT see a $1,200.00 recurring expense
+
+  Scenario: Opening a recurring expense from the Transactions screen
+    Given today is 2026-03-01
+      And a recurring $1,200.00 "Housing" expense next due 2026-04-01
+    When I open the Transactions tab
+      And I choose "Show recurring" from the menu
+      And I open the $1,200.00 recurring expense
+    Then it should show a monthly $1,200.00 "Housing" expense next due 4/1/26
+
+  Scenario: Deleting a recurring expense
+    Given today is 2026-03-01
+      And a recurring $1,200.00 "Housing" expense next due 2026-04-01
+    When I open the Transactions tab
+      And I choose "Show recurring" from the menu
+      And I open the $1,200.00 recurring expense
+      And I delete it from the recurring expense menu
+      And I choose "Show recurring" from the menu
+    Then the recurring list should say "No recurring expenses yet"

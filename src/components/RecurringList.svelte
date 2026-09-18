@@ -25,13 +25,16 @@ export let emptyMessage = 'No recurring expenses yet'
   text-transform: uppercase;
 }
 
-/* A hairline rather than a gap between rows, as in the transaction list. */
+/* A hairline rather than a gap between rows, as in the transaction list. Each
+   row is the link to what it describes, so the whole row is the touch
+   target. */
 .recurring-row {
   align-items: center;
   border-bottom: 1px solid var(--surface-container-low);
   display: flex;
   gap: 14px;
   height: 48px;
+  text-decoration: none;
 }
 
 .recurring-next-due {
@@ -69,11 +72,11 @@ export let emptyMessage = 'No recurring expenses yet'
 <div class="recurring-list">
   <p class="recurring-heading">Recurring</p>
   {#each recurringTransactions as { _id, amountTotal, nextDue, who } (_id)}
-    <div class="recurring-row">
+    <a class="recurring-row" href="#/recurring/{ _id }">
       <span class="recurring-next-due">{ formatDateCompact(getNoonTimestamp(nextDue)) }</span>
       <span class="recurring-who">{ who }</span>
       <span class="recurring-amount">{ formatMoney(amountTotal) }</span>
-    </div>
+    </a>
   {:else}
     <p class="no-recurring">{ emptyMessage }</p>
   {/each}

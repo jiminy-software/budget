@@ -1,4 +1,5 @@
 const { Given, Then, When } = require('@cucumber/cucumber');
+const assert = require('assert');
 const { dollarsToCents, formatDollars } = require('../support/conversions');
 const {
   chooseAccount,
@@ -76,3 +77,47 @@ Then(
     await this.waitForNoRecurringRow({ amount: formatDollars(dollars) });
   }
 );
+
+When(/^I open the \$([0-9,.]+) recurring expense$/, async function (dollars) {
+  await this.openRecurringExpense(formatDollars(dollars));
+  await this.waitForHeadingStartingWith('Recurring expense');
+});
+
+// One step for the whole screen, since each part of it is only worth reading
+// together with the rest: this much, from this envelope, on this date.
+Then(
+  /^it should show a monthly \$([0-9,.]+) "([^"]*)" expense next due (\S+)$/,
+  async function (dollars, category, nextDue) {
+    const amount = formatDollars(dollars);
+    const shown = await this.readRecurringDetail();
+    assert.strictEqual(shown.repeats, 'Monthly', 'how often it repeats');
+    assert.strictEqual(shown.amount, amount, 'the amount');
+    assert.strictEqual(shown.nextDue, nextDue, 'the next due date');
+    assert.ok(
+      shown.categories.some((tag) => tag.startsWith(`${category} `)),
+      `Expected a "${category}" category tag, but the screen shows ` +
+        (shown.categories.length === 0
+          ? 'none'
+          : shown.categories.join(', '))
+    );
+  }
+);
+
+// Delete opens a confirm(), as the account and category screens do.
+When('I delete it from the recurring expense menu', async function () {
+  await this.openDetailMenu();
+  this.acceptNextConfirm();
+  await this.clickElementWithText('[role="menuitem"]', 'Delete recurring expense');
+  await this.waitForHeadingStartingWith('Transactions');
+});
+
+Then('the recurring list should say {string}', async function (text) {
+  await this.page.waitForFunction(
+    (expected) => {
+      const message = document.querySelector('.no-recurring');
+      return message && message.textContent.trim() === expected;
+    },
+    { timeout: 5000 },
+    text
+  );
+});
