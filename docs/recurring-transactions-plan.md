@@ -4,12 +4,12 @@ Goal: let a user set up an expense that repeats every month (rent, a mortgage
 payment) so the app records it each month instead of the user entering it by
 hand.
 
-Status, 2026-09-18: Phases 1 to 3 are done on
+Status, 2026-09-18: all four phases are done on
 `feature/recurring-transactions`, suite green. A recurring expense can be set
 up from the expense flow, is recorded when due (catching up missed months),
 and can be seen and deleted from the Transactions screen, so the branch is
-releasable. Phase 4 (the spec and README) remains, as does the Jan 31
-calendar scenario listed in Phase 1.
+releasable. The Jan 31 calendar scenario listed in Phase 1 is the one thing
+still open.
 
 Decisions settled on 2026-09-14:
 
@@ -160,10 +160,10 @@ Gherkin first, approved verbatim, then the step definitions, run red.
 
 ## Phase 4: spec and docs
 
-- [ ] The list above as a 2.1.0 addition to
+- [x] The list above as a 2.1.0 addition to
   https://github.com/forevermatt/budget-data, a separate repo with its own
   PR.
-- [ ] README: the Data Structure section names 2.1.0, and a roadmap line.
+- [x] README: the Data Structure section names 2.1.0, and a roadmap line.
 
 ## Known limits, shared with the refill
 
