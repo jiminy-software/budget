@@ -57,7 +57,7 @@ https://jiminy-software.github.io/budget/
 
 ## Data Structure
 
-This application aims to comply with version 2.0.0 of the
+This application aims to comply with version 2.1.0 of the
 https://github.com/forevermatt/budget-data specification.
 
 ## Development
