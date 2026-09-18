@@ -4,11 +4,12 @@ Goal: let a user set up an expense that repeats every month (rent, a mortgage
 payment) so the app records it each month instead of the user entering it by
 hand.
 
-Status, 2026-09-18: Phase 2 and the first Phase 1 scenario are done on
-`feature/recurring-transactions`, suite green. **Not releasable yet**: the
-switch is live, so a recurring expense can be set up, but nothing lists or
-deletes one until Phase 3. The inert part (everything but the switch and its
-scenario) could ship alone if a smaller PR is wanted.
+Status, 2026-09-18: Phases 1 to 3 are done on
+`feature/recurring-transactions`, suite green. A recurring expense can be set
+up from the expense flow, is recorded when due (catching up missed months),
+and can be seen and deleted from the Transactions screen, so the branch is
+releasable. Phase 4 (the spec and README) remains, as does the Jan 31
+calendar scenario listed in Phase 1.
 
 Decisions settled on 2026-09-14:
 
@@ -103,9 +104,8 @@ transaction and shows in the account and category histories like any other.
 Built first, separately (now done). What this feature needs from it:
 
 - [x] A Transactions tab in the bottom bar and the screen it opens.
-- [ ] A way to see the recurring expenses there, each opening `/recurring/:id`
-  (Phase 3). Without that, a recurring expense could be set up but never seen
-  or stopped, so this feature does not ship before it.
+- [x] A way to see the recurring expenses there, each opening `/recurring/:id`
+  (Phase 3).
 
 ## Phase 1: test scenarios to consider, adding some
 
@@ -119,7 +119,7 @@ Gherkin first, approved verbatim, then the step definitions, run red.
   expense dated today, which the first scenario cannot tell apart.
 - [x] One missed for two months is recorded for each month.
 - [ ] A day the next month lacks: Jan 31 recorded, then Feb 28.
-- [ ] Seeing recurring expenses on the Transactions screen; deleting one
+- [x] Seeing recurring expenses on the Transactions screen; deleting one
   stops it (with Phase 3).
 - [x] Dates in scenarios: the browser's clock is frozen per scenario.
 - [x] Test support: `ensureAccount` / `ensureCategory` seed by name on first
@@ -147,14 +147,16 @@ Gherkin first, approved verbatim, then the step definitions, run red.
 
 ## Phase 3: seeing and stopping
 
-- [ ] The recurring list on the Transactions screen.
-- [ ] `/recurring/:id`: the Review screen showing a stored recurring expense,
-  with Delete in the header menu. Open: read-only, or editable? Date (here
-  the next due date) and Note are already inputs on the Review screen, so
-  they can save in place. Payee, account, amount and category are links into
-  the flow's steps, which only move forward, so editing those means teaching
-  the steps to return to the Review, a change that would also unlock editing
-  ordinary transactions. Until then, changing those is delete and recreate.
+- [x] The recurring list on the Transactions screen, behind a "Show
+  recurring" / "Hide recurring" item in a triple-dot menu `ScreenHeader` now
+  carries.
+- [x] `/recurring/:id`: the Review screen's layout showing a stored recurring
+  expense, with Delete in the header menu. Read-only for now, so changing one
+  is delete and recreate. Date (here the next due date) and Note are already
+  inputs on the Review screen, so they could save in place later. Payee,
+  account, amount and category are links into the flow's steps, which only
+  move forward, so editing those means teaching the steps to return to the
+  Review, a change that would also unlock editing ordinary transactions.
 
 ## Phase 4: spec and docs
 
