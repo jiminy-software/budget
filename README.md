@@ -48,6 +48,7 @@ https://jiminy-software.github.io/budget/
   * [ ] Dropbox API
   * [ ] Simple JSON import/export
 - [x] Auto-refill categories each month
+- [x] Record recurring expenses (rent, mortgage) automatically each month
 - [ ] Enable adding category during new-transaction workflow
 - [ ] Enable adding account during new-transaction workflow
 - [x] Add done and cancel buttons when adding an account
@@ -57,7 +58,7 @@ https://jiminy-software.github.io/budget/
 
 ## Data Structure
 
-This application aims to comply with version 2.0.0 of the
+This application aims to comply with version 2.1.0 of the
 https://github.com/forevermatt/budget-data specification.
 
 ## Development

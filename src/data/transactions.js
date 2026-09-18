@@ -26,8 +26,12 @@ export const getTransactionsForCategory = async (categoryId) => {
   })
 }
 
-export const savePendingTransaction = async () => {
-  const transaction = get(transactionInProgress)
+/**
+ * Store a transaction and take its amounts out of the budget categories. The
+ * one path by which an expense becomes real, whether entered by hand or
+ * recorded from a recurring transaction.
+ */
+export const recordTransaction = async (transaction) => {
   await addTransaction(transaction)
 
   const categoryAmounts = transaction.categoryAmounts || {}
@@ -35,7 +39,10 @@ export const savePendingTransaction = async () => {
     const categoryAmount = categoryAmounts[categoryId] || 0
     await subtractAmountFromBudgetCategory(categoryId, categoryAmount)
   }
+}
 
+export const savePendingTransaction = async () => {
+  await recordTransaction(get(transactionInProgress))
   startNewPendingTransaction({})
 }
 

@@ -33,6 +33,28 @@ class CustomWorld {
     }
   }
 
+  // Fixes the date every page the browser loads from now on believes it is:
+  // local noon on the given day. Registered before the app is opened; if it
+  // already is, a reload brings the shim into effect.
+  async freezeClockAt(dateString) {
+    await this.page.evaluateOnNewDocument((date) => {
+      const RealDate = Date;
+      const fixed = new RealDate(`${date}T12:00:00`).getTime();
+      function FrozenDate(...args) {
+        if (!(this instanceof FrozenDate)) return String(new RealDate(fixed));
+        return args.length ? new RealDate(...args) : new RealDate(fixed);
+      }
+      FrozenDate.prototype = RealDate.prototype;
+      FrozenDate.now = () => fixed;
+      FrozenDate.parse = RealDate.parse;
+      FrozenDate.UTC = RealDate.UTC;
+      window.Date = FrozenDate;
+    }, dateString);
+    if (this.page.url().startsWith(BASE_URL)) {
+      await this.page.reload({ waitUntil: 'networkidle0' });
+    }
+  }
+
   // Resolves once the service worker is not just registered but activated and
   // in charge of the page. A worker only becomes a client's controller after
   // it activates, which happens after its install step has finished
@@ -135,6 +157,26 @@ class CustomWorld {
     });
   }
 
+  // A recurring expense already set up before the scenario starts, so a
+  // scenario about catching up does not have to walk the expense flow first.
+  async seedRecurringTransaction({
+    who,
+    accountId,
+    categoryId,
+    amountTotal,
+    nextDue,
+  }) {
+    await this.seed({
+      _id: `r-${randomUUID()}`,
+      who,
+      accountId,
+      amountTotal,
+      categoryAmounts: { [categoryId]: amountTotal },
+      recurs: 'monthly',
+      nextDue,
+    });
+  }
+
   // How many documents of one type (by _id prefix) the app's database holds.
   async countDocs(prefix) {
     await this.ensureAppLoaded();
@@ -215,6 +257,35 @@ class CustomWorld {
     await handle.asElement().click();
   }
 
+  async openCategoryDetails(name) {
+    await this.openApp('/budget');
+    await this.waitForBudgetOverview();
+    await this.clickByText('.category-list .category-name', name);
+    await this.waitForHeadingStartingWith(name);
+  }
+
+  // The review screen's date is a native date input, so set it directly and
+  // fire the change event the screen listens for.
+  async setReviewDate(dateString) {
+    await this.page.$eval(
+      'input[type="date"]',
+      (el, value) => {
+        el.value = value;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      },
+      dateString
+    );
+  }
+
+  async turnOnRepeatsMonthly() {
+    try {
+      await this.page.waitForSelector('#repeats-monthly', { timeout: 5000 });
+    } catch (e) {
+      throw new Error('The review screen has no "Repeats monthly" switch.');
+    }
+    await this.page.click('#repeats-monthly');
+  }
+
   // Renaming is still a browser prompt(), so answer the next one. Register
   // this before the click that opens it.
   answerNextPrompt(text) {
@@ -252,15 +323,169 @@ class CustomWorld {
     await input.type(String(cents));
   }
 
-  // The payee and amount of each row of the transaction list on screen, top
-  // to bottom.
+  // The date, payee and amount of each row of the transaction list on
+  // screen, top to bottom.
   async readTransactionRows() {
     return this.page.evaluate(() =>
       [...document.querySelectorAll('.transaction-row')].map((row) => ({
+        date: row.querySelector('.transaction-date').textContent.trim(),
         who: row.querySelector('.transaction-who').textContent.trim(),
         amount: row.querySelector('.transaction-amount').textContent.trim(),
       }))
     );
+  }
+
+  // Waits for a row showing the given amount (as the app formats it, e.g.
+  // "$1,200.00") and, if given, the given compact date (e.g. "3/1/26").
+  async waitForTransactionRow({ amount, date }) {
+    try {
+      await this.page.waitForFunction(
+        (amt, dt) =>
+          [...document.querySelectorAll('.transaction-row')].some(
+            (row) =>
+              row.querySelector('.transaction-amount').textContent.trim() === amt &&
+              (!dt || row.querySelector('.transaction-date').textContent.trim() === dt)
+          ),
+        { timeout: 5000 },
+        amount,
+        date || null
+      );
+    } catch (e) {
+      const rows = await this.readTransactionRows();
+      const shown =
+        rows.length === 0
+          ? 'no transactions'
+          : rows.map((r) => `${r.date} "${r.who}" ${r.amount}`).join(', ');
+      throw new Error(
+        `Expected a ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
+          `but the list shows ${shown}`
+      );
+    }
+  }
+
+  // The opposite of waitForTransactionRow: fails if such a row is on screen.
+  // There is nothing to wait for, so this reads the list as it stands, which
+  // is safe once a step has waited for the rows that should be there.
+  async assertNoTransactionRow({ amount, date }) {
+    await this.page.waitForSelector('.transaction-list');
+    const rows = await this.readTransactionRows();
+    const unwanted = rows.find(
+      (row) => row.amount === amount && (!date || row.date === date)
+    );
+    if (unwanted) {
+      throw new Error(
+        `Expected no ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
+          `but the list shows ${unwanted.date} "${unwanted.who}" ${unwanted.amount}`
+      );
+    }
+  }
+
+  // The next due date, payee and amount of each row of the recurring list on
+  // screen, top to bottom.
+  async readRecurringRows() {
+    return this.page.evaluate(() =>
+      [...document.querySelectorAll('.recurring-row')].map((row) => ({
+        nextDue: row.querySelector('.recurring-next-due').textContent.trim(),
+        who: row.querySelector('.recurring-who').textContent.trim(),
+        amount: row.querySelector('.recurring-amount').textContent.trim(),
+      }))
+    );
+  }
+
+  // As waitForTransactionRow, over the recurring list; the date here is the
+  // next due date, e.g. "4/1/26".
+  async waitForRecurringRow({ amount, nextDue }) {
+    try {
+      await this.page.waitForFunction(
+        (amt, due) =>
+          [...document.querySelectorAll('.recurring-row')].some(
+            (row) =>
+              row.querySelector('.recurring-amount').textContent.trim() ===
+                amt &&
+              (!due ||
+                row.querySelector('.recurring-next-due').textContent.trim() ===
+                  due)
+          ),
+        { timeout: 5000 },
+        amount,
+        nextDue || null
+      );
+    } catch (e) {
+      throw new Error(
+        `Expected a ${amount} recurring expense` +
+          `${nextDue ? ` next due ${nextDue}` : ''}, ` +
+          `but the screen shows ${this.describeRecurringRows(
+            await this.readRecurringRows()
+          )}`
+      );
+    }
+  }
+
+  // Waits for such a row to be gone rather than reading once, since hiding
+  // the list is a render away from the click that asked for it.
+  async waitForNoRecurringRow({ amount }) {
+    try {
+      await this.page.waitForFunction(
+        (amt) =>
+          ![...document.querySelectorAll('.recurring-row')].some(
+            (row) =>
+              row.querySelector('.recurring-amount').textContent.trim() === amt
+          ),
+        { timeout: 5000 },
+        amount
+      );
+    } catch (e) {
+      throw new Error(
+        `Expected no ${amount} recurring expense, but the screen shows ` +
+          this.describeRecurringRows(await this.readRecurringRows())
+      );
+    }
+  }
+
+  // Opens the recurring expense the given amount identifies, from the list on
+  // the Transactions screen.
+  async openRecurringExpense(amount) {
+    await this.waitForRecurringRow({ amount });
+    await this.page.evaluate((amt) => {
+      [...document.querySelectorAll('.recurring-row')]
+        .find(
+          (row) =>
+            row.querySelector('.recurring-amount').textContent.trim() === amt
+        )
+        .click();
+    }, amount);
+  }
+
+  // Everything the recurring expense screen shows, so one step can check it
+  // all and say what was wrong.
+  async readRecurringDetail() {
+    return this.page.evaluate(() => {
+      const textOf = (selector) => {
+        const element = document.querySelector(selector);
+        return element ? element.textContent.trim() : null;
+      };
+      return {
+        who: textOf('.payee'),
+        amount: textOf('.total'),
+        repeats: textOf('.repeats-value'),
+        nextDue: textOf('.next-due-value'),
+        // Each tag reads "Housing · $1,200.00".
+        categories: [...document.querySelectorAll('.category-tag')].map((tag) =>
+          tag.textContent.trim()
+        ),
+      };
+    });
+  }
+
+  // As answerNextPrompt, for the confirm() a delete opens.
+  acceptNextConfirm() {
+    this.page.once('dialog', (dialog) => dialog.accept());
+  }
+
+  describeRecurringRows(rows) {
+    return rows.length === 0
+      ? 'no recurring expenses'
+      : rows.map((r) => `${r.nextDue} "${r.who}" ${r.amount}`).join(', ');
   }
 
   async readRemainingShownFor(categoryName) {

@@ -13,6 +13,7 @@ import ExpenseReview from './ExpenseReview.svelte'
 import ExpenseWho from './ExpenseWho.svelte'
 import Home from './Home.svelte'
 import NotFound from './NotFound.svelte'
+import RecurringView from './RecurringView.svelte'
 import Settings from './Settings.svelte'
 import Transactions from './Transactions.svelte'
 
@@ -32,6 +33,7 @@ const routes = {
   '/expense/new': ExpenseNew,
   '/expense/review/': ExpenseReview,
   '/expense/who/': ExpenseWho,
+  '/recurring/:id': RecurringView,
   '/settings': Settings,
   '/transactions': Transactions,
   '*': NotFound,
