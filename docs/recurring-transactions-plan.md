@@ -4,6 +4,12 @@ Goal: let a user set up an expense that repeats every month (rent, a mortgage
 payment) so the app records it each month instead of the user entering it by
 hand.
 
+Status, 2026-09-18: Phase 2 and the first Phase 1 scenario are done on
+`feature/recurring-transactions`, suite green. **Not releasable yet**: the
+switch is live, so a recurring expense can be set up, but nothing lists or
+deletes one until Phase 3. The inert part (everything but the switch and its
+scenario) could ship alone if a smaller PR is wanted.
+
 Decisions settled on 2026-09-14:
 
 - Recorded automatically when due, at app load, catching up any months the
@@ -22,6 +28,18 @@ Decisions settled on 2026-09-14:
   from a recorded transaction to what recorded it.
 - The screen says "recurring expense"; the data says recurring transaction,
   matching the app's existing expense/transaction split.
+
+Settled since:
+
+- The Review screen's Date row keeps the label "Date" with the switch on.
+- Recurring expenses are recorded one at a time, not in parallel like the
+  refill: two of them in one category would race on its `remaining`.
+- The recurring list is reached from a triple-dot menu on the Transactions
+  screen with a "Show recurring" / "Hide recurring" item, like the account
+  and category detail menus.
+- Scenarios freeze the browser's clock (`Given today is 2026-03-01`, always
+  the scenario's first step) rather than using relative dates, so calendar
+  cases can name real dates.
 
 ## Behavior
 
@@ -84,42 +102,48 @@ transaction and shows in the account and category histories like any other.
 
 Built first, separately (now done). What this feature needs from it:
 
-- A Transactions tab in the bottom bar (`src/components/ButtonRow.svelte`
-  already anticipates one) and the screen it opens.
-- A way to see the recurring expenses there, each opening `/recurring/:id`.
-  Without that, a recurring expense could be set up but never seen or
-  stopped, so this feature does not ship before it.
+- [x] A Transactions tab in the bottom bar and the screen it opens.
+- [ ] A way to see the recurring expenses there, each opening `/recurring/:id`
+  (Phase 3). Without that, a recurring expense could be set up but never seen
+  or stopped, so this feature does not ship before it.
 
 ## Phase 1: test scenarios to consider, adding some
 
 Gherkin first, approved verbatim, then the step definitions, run red.
 
-- [ ] Scenarios for: setting one up from the expense flow; one due today is
-  recorded right away and shows in the list of transactions;
-  one due in the future is not; one missed for two months is recorded for
-  each; a day the next month lacks; deleting one stops it.
-- [ ] Dates in scenarios: relative ("due yesterday"), matching the refill
-  scenario, or absolute with the browser's clock frozen for that scenario,
-  the only way to pin a calendar case like Jan 31 to Feb 28. Decide when
-  writing them.
-- [ ] Test support: seeding steps that remember ids by name, so a recurring
-  expense can be seeded against a named account and category; a recurring
-  seed step; assertions on history rows. The history assertion also closes
-  the item the modernization plan deferred from its Phase 0.
+- [x] Recording one from the expense flow whose first date is today; it
+  shows on the category's details screen
+  (`features/recurring-transactions.feature`).
+- [ ] One due in the future is not recorded. This is the scenario that
+  proves the switch took the recurring path rather than saving an ordinary
+  expense dated today, which the first scenario cannot tell apart.
+- [ ] One missed for two months is recorded for each month.
+- [ ] A day the next month lacks: Jan 31 recorded, then Feb 28.
+- [ ] Seeing recurring expenses on the Transactions screen; deleting one
+  stops it (with Phase 3).
+- [x] Dates in scenarios: the browser's clock is frozen per scenario.
+- [x] Test support: `ensureAccount` / `ensureCategory` seed by name on first
+  use; `setReviewDate`, `turnOnRepeatsMonthly` and `waitForTransactionRow`
+  (amount, optional date) in `features/support/world.js`; the expense-flow
+  helpers moved to `features/support/expense-flow.js`. Still to come: a step
+  that seeds a recurring expense directly, for the catch-up and calendar
+  scenarios.
 
 ## Phase 2: recording
 
-- [ ] `src/data/recurringTransactions.js`: the CRUD shape of
-  `transactions.js` over prefix `r`, plus `recordDueRecurringTransactions()`.
-- [ ] Pull the insert-and-subtract half of `savePendingTransaction()` out
-  into a function both it and the recurring run call, so a recorded recurring
-  expense takes exactly the path a hand-entered one does.
-- [ ] Date helpers in `src/helpers/dates.js`: today as `YYYY-MM-DD`, the same
-  day next month (clamped), and `YYYY-MM-DD` to a local-noon timestamp.
-- [ ] Run it in `startUp` after the refill, and after saving a recurring
+**Done.**
+
+- [x] `src/data/recurringTransactions.js`: the CRUD shape of
+  `transactions.js` over prefix `r`, plus `recordDueRecurringTransactions()`
+  and `savePendingRecurringTransaction()`.
+- [x] `recordTransaction()` pulled out of `savePendingTransaction()`, so a
+  recorded recurring expense takes exactly the path a hand-entered one does.
+- [x] Date helpers in `src/helpers/dates.js`: `getTodayISO8601`,
+  `getSameDayNextMonth` (clamped), `getNoonTimestamp`.
+- [x] Runs in `startUp` after the refill, and after saving a recurring
   expense.
-- [ ] The Review screen's "Repeats monthly" switch, and the save path that
-  branches on it.
+- [x] The Review screen's "Repeats monthly" switch (`#repeats-monthly`), and
+  the save path that branches on it.
 
 ## Phase 3: seeing and stopping
 
