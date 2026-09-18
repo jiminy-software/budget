@@ -114,7 +114,7 @@ Gherkin first, approved verbatim, then the step definitions, run red.
 - [x] Recording one from the expense flow whose first date is today; it
   shows on the category's details screen
   (`features/recurring-transactions.feature`).
-- [ ] One due in the future is not recorded. This is the scenario that
+- [x] One due in the future is not recorded. This is the scenario that
   proves the switch took the recurring path rather than saving an ordinary
   expense dated today, which the first scenario cannot tell apart.
 - [ ] One missed for two months is recorded for each month.
