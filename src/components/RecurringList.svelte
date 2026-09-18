@@ -10,9 +10,19 @@ export let emptyMessage = 'No recurring expenses yet'
 
 <style>
 /* The app-wide container already supplies half the gutter, so 8px more brings
-   the rows to the 20px inset the design draws. */
+   the rows to the 20px inset the design draws. The rule below the list is
+   darker and thicker than the hairlines within it, with air on both sides, so
+   the recurring expenses read as a block above the transactions rather than
+   as more of them. */
 .recurring-list {
-  padding: 8px 8px 0;
+  border-bottom: 2px solid var(--outline-variant);
+  margin-bottom: 12px;
+  padding: 8px 8px 12px;
+}
+
+/* The rule below is separation enough for the last row. */
+.recurring-row:last-of-type {
+  border-bottom: 0;
 }
 
 .recurring-heading {
