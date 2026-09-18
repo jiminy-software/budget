@@ -27,3 +27,18 @@ Feature: Recurring transactions
     Then I should see a $1,200.00 transaction dated 1/10/26
       And I should see a $1,200.00 transaction dated 2/10/26
       But I should NOT see a $1,200.00 transaction dated 3/10/26
+
+  Scenario: Seeing the recurring expenses on the Transactions screen
+    Given today is 2026-03-01
+      And a recurring $1,200.00 "Housing" expense next due 2026-04-01
+    When I open the Transactions tab
+      And I choose "Show recurring" from the menu
+    Then I should see a $1,200.00 recurring expense next due 4/1/26
+
+  Scenario: Hiding the recurring expenses again
+    Given today is 2026-03-01
+      And a recurring $1,200.00 "Housing" expense next due 2026-04-01
+    When I open the Transactions tab
+      And I choose "Show recurring" from the menu
+      And I choose "Hide recurring" from the menu
+    Then I should NOT see a $1,200.00 recurring expense

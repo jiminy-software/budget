@@ -182,6 +182,12 @@ When('I rename it to {string} from the category menu', async function (name) {
   await renameFromDetailMenu(this, 'Rename category', name);
 });
 
+// Any screen whose header carries the triple-dot menu.
+When('I choose {string} from the menu', async function (item) {
+  await this.openDetailMenu();
+  await this.clickElementWithText('[role="menuitem"]', item);
+});
+
 Given('I have already visited the app once', async function () {
   await this.openApp('/');
   await this.waitForServiceWorkerControl();

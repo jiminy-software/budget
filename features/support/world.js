@@ -380,6 +380,74 @@ class CustomWorld {
     }
   }
 
+  // The next due date, payee and amount of each row of the recurring list on
+  // screen, top to bottom.
+  async readRecurringRows() {
+    return this.page.evaluate(() =>
+      [...document.querySelectorAll('.recurring-row')].map((row) => ({
+        nextDue: row.querySelector('.recurring-next-due').textContent.trim(),
+        who: row.querySelector('.recurring-who').textContent.trim(),
+        amount: row.querySelector('.recurring-amount').textContent.trim(),
+      }))
+    );
+  }
+
+  // As waitForTransactionRow, over the recurring list; the date here is the
+  // next due date, e.g. "4/1/26".
+  async waitForRecurringRow({ amount, nextDue }) {
+    try {
+      await this.page.waitForFunction(
+        (amt, due) =>
+          [...document.querySelectorAll('.recurring-row')].some(
+            (row) =>
+              row.querySelector('.recurring-amount').textContent.trim() ===
+                amt &&
+              (!due ||
+                row.querySelector('.recurring-next-due').textContent.trim() ===
+                  due)
+          ),
+        { timeout: 5000 },
+        amount,
+        nextDue || null
+      );
+    } catch (e) {
+      throw new Error(
+        `Expected a ${amount} recurring expense` +
+          `${nextDue ? ` next due ${nextDue}` : ''}, ` +
+          `but the screen shows ${this.describeRecurringRows(
+            await this.readRecurringRows()
+          )}`
+      );
+    }
+  }
+
+  // Waits for such a row to be gone rather than reading once, since hiding
+  // the list is a render away from the click that asked for it.
+  async waitForNoRecurringRow({ amount }) {
+    try {
+      await this.page.waitForFunction(
+        (amt) =>
+          ![...document.querySelectorAll('.recurring-row')].some(
+            (row) =>
+              row.querySelector('.recurring-amount').textContent.trim() === amt
+          ),
+        { timeout: 5000 },
+        amount
+      );
+    } catch (e) {
+      throw new Error(
+        `Expected no ${amount} recurring expense, but the screen shows ` +
+          this.describeRecurringRows(await this.readRecurringRows())
+      );
+    }
+  }
+
+  describeRecurringRows(rows) {
+    return rows.length === 0
+      ? 'no recurring expenses'
+      : rows.map((r) => `${r.nextDue} "${r.who}" ${r.amount}`).join(', ');
+  }
+
   async readRemainingShownFor(categoryName) {
     return this.page.evaluate((name) => {
       const rows = [...document.querySelectorAll('.category-list .category-row')];

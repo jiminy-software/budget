@@ -1,5 +1,5 @@
-const { Given, When } = require('@cucumber/cucumber');
-const { dollarsToCents } = require('../support/conversions');
+const { Given, Then, When } = require('@cucumber/cucumber');
+const { dollarsToCents, formatDollars } = require('../support/conversions');
 const {
   chooseAccount,
   completeReview,
@@ -60,3 +60,19 @@ When('I reopen the app', async function () {
 When(/^I go to the "([^"]*)" category's details screen$/, async function (name) {
   await this.openCategoryDetails(name);
 });
+
+// The recurring list shows the next due date in the same compact form the
+// transaction list shows a date, e.g. "4/1/26".
+Then(
+  /^I should see a \$([0-9,.]+) recurring expense next due (\S+)$/,
+  async function (dollars, nextDue) {
+    await this.waitForRecurringRow({ amount: formatDollars(dollars), nextDue });
+  }
+);
+
+Then(
+  /^I should NOT see a \$([0-9,.]+) recurring expense$/,
+  async function (dollars) {
+    await this.waitForNoRecurringRow({ amount: formatDollars(dollars) });
+  }
+);
