@@ -203,7 +203,7 @@ const setTimestamp = event => {
       <a class="detail-value" href="#/expense/account/">{ accountName }</a>
     </div>
     <div class="detail-row">
-      <span class="detail-label">{ repeatsMonthly ? 'First on' : 'Date' }</span>
+      <span class="detail-label">Date</span>
       <input class="detail-value detail-input detail-date" type="date" aria-label="Date"
              on:change={setTimestamp} value={formatDateISO8601(transaction.timestamp)} />
     </div>
