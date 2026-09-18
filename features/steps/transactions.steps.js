@@ -49,6 +49,16 @@ Then(
   }
 );
 
+// The same shape as the step above, negated: no such row is on screen. Put
+// it after the steps that wait for the rows that should be there, since it
+// reads the list rather than waiting on it.
+Then(
+  /^I should NOT see an? \$([0-9,.]+) transaction(?: dated (\S+))?$/,
+  async function (dollars, date) {
+    await this.assertNoTransactionRow({ amount: formatDollars(dollars), date });
+  }
+);
+
 // "Bakery", then "Farm Stand", then "Corner Store": every row, top to bottom.
 Then(
   /^the transactions list should show ("[^"]*"(?:, then "[^"]*")*)$/,

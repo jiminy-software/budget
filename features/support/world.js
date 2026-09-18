@@ -157,6 +157,26 @@ class CustomWorld {
     });
   }
 
+  // A recurring expense already set up before the scenario starts, so a
+  // scenario about catching up does not have to walk the expense flow first.
+  async seedRecurringTransaction({
+    who,
+    accountId,
+    categoryId,
+    amountTotal,
+    nextDue,
+  }) {
+    await this.seed({
+      _id: `r-${randomUUID()}`,
+      who,
+      accountId,
+      amountTotal,
+      categoryAmounts: { [categoryId]: amountTotal },
+      recurs: 'monthly',
+      nextDue,
+    });
+  }
+
   // How many documents of one type (by _id prefix) the app's database holds.
   async countDocs(prefix) {
     await this.ensureAppLoaded();
@@ -339,6 +359,23 @@ class CustomWorld {
       throw new Error(
         `Expected a ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
           `but the list shows ${shown}`
+      );
+    }
+  }
+
+  // The opposite of waitForTransactionRow: fails if such a row is on screen.
+  // There is nothing to wait for, so this reads the list as it stands, which
+  // is safe once a step has waited for the rows that should be there.
+  async assertNoTransactionRow({ amount, date }) {
+    await this.page.waitForSelector('.transaction-list');
+    const rows = await this.readTransactionRows();
+    const unwanted = rows.find(
+      (row) => row.amount === amount && (!date || row.date === date)
+    );
+    if (unwanted) {
+      throw new Error(
+        `Expected no ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
+          `but the list shows ${unwanted.date} "${unwanted.who}" ${unwanted.amount}`
       );
     }
   }

@@ -33,6 +33,30 @@ When(
   }
 );
 
+// The Given twin of the step above: a recurring expense already set up,
+// seeded straight into the database, with the payee and account the scenario
+// leaves unnamed.
+Given(
+  /^a recurring \$([0-9,.]+) "([^"]*)" expense next due (\d{4}-\d{2}-\d{2})$/,
+  async function (dollars, category, nextDue) {
+    await this.seedRecurringTransaction({
+      who: 'Somewhere',
+      accountId: await this.ensureAccount('Checking'),
+      categoryId: await this.ensureCategory(category),
+      amountTotal: dollarsToCents(dollars),
+      nextDue,
+    });
+  }
+);
+
+// A fresh load, which is when the app records whatever has fallen due. The
+// heading is the router's, so waiting for it waits out the start-up the
+// router is held behind.
+When('I reopen the app', async function () {
+  await this.openApp('/');
+  await this.page.waitForSelector('h2');
+});
+
 When(/^I go to the "([^"]*)" category's details screen$/, async function (name) {
   await this.openCategoryDetails(name);
 });

@@ -117,7 +117,7 @@ Gherkin first, approved verbatim, then the step definitions, run red.
 - [x] One due in the future is not recorded. This is the scenario that
   proves the switch took the recurring path rather than saving an ordinary
   expense dated today, which the first scenario cannot tell apart.
-- [ ] One missed for two months is recorded for each month.
+- [x] One missed for two months is recorded for each month.
 - [ ] A day the next month lacks: Jan 31 recorded, then Feb 28.
 - [ ] Seeing recurring expenses on the Transactions screen; deleting one
   stops it (with Phase 3).
@@ -125,9 +125,9 @@ Gherkin first, approved verbatim, then the step definitions, run red.
 - [x] Test support: `ensureAccount` / `ensureCategory` seed by name on first
   use; `setReviewDate`, `turnOnRepeatsMonthly` and `waitForTransactionRow`
   (amount, optional date) in `features/support/world.js`; the expense-flow
-  helpers moved to `features/support/expense-flow.js`. Still to come: a step
-  that seeds a recurring expense directly, for the catch-up and calendar
-  scenarios.
+  helpers moved to `features/support/expense-flow.js`;
+  `seedRecurringTransaction` seeds one directly, for the catch-up and
+  calendar scenarios.
 
 ## Phase 2: recording
 
