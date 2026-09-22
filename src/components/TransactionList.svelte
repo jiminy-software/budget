@@ -14,13 +14,15 @@ export let emptyMessage = 'No matching transactions found.'
 }
 
 /* A hairline rather than a gap between rows: the list is dense enough that
-   air alone stops separating them. */
+   air alone stops separating them. Each row is the link to the transaction it
+   shows, so the whole row is the touch target. */
 .transaction-row {
   align-items: center;
   border-bottom: 1px solid var(--surface-container-low);
   display: flex;
   gap: 14px;
   height: 48px;
+  text-decoration: none;
 }
 
 .transaction-date {
@@ -58,11 +60,11 @@ export let emptyMessage = 'No matching transactions found.'
 
 <div class="transaction-list">
   {#each transactions as { _id, amountTotal, timestamp, who } (_id)}
-    <div class="transaction-row">
+    <a class="transaction-row" href="#/transaction/{ _id }">
       <span class="transaction-date">{ formatDateCompact(timestamp) }</span>
       <span class="transaction-who">{ who }</span>
       <span class="transaction-amount">{ formatMoney(amountTotal) }</span>
-    </div>
+    </a>
   {:else}
     <p class="no-transactions">{ emptyMessage }</p>
   {/each}

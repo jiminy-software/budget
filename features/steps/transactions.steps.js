@@ -108,3 +108,25 @@ Then('the transactions list should say {string}', async function (text) {
     );
   }
 });
+
+When(/^I open the \$([0-9,.]+) transaction$/, async function (dollars) {
+  await this.openTransaction(formatDollars(dollars));
+});
+
+// One step for the whole screen, as on the recurring expense screen: the
+// scenario's Given, read back off what the screen shows.
+Then(
+  /^it should show an? \$([0-9,.]+) "([^"]*)" expense at "([^"]*)" from "([^"]*)" dated (\S+)$/,
+  async function (dollars, category, who, account, date) {
+    const shown = await this.readTransactionDetail();
+    assert.strictEqual(shown.amount, formatDollars(dollars), 'the amount');
+    assert.strictEqual(shown.who, who, 'the payee');
+    assert.strictEqual(shown.account, account, 'the account');
+    assert.strictEqual(shown.date, date, 'the date');
+    assert.ok(
+      shown.categories.some((tag) => tag.startsWith(`${category} `)),
+      `Expected a "${category}" category tag, but the screen shows ` +
+        (shown.categories.length === 0 ? 'none' : shown.categories.join(', '))
+    );
+  }
+);
