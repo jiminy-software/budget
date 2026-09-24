@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store'
-import { subtractAmountFromBudgetCategory } from './budget'
+import { addAmountToBudgetCategory, subtractAmountFromBudgetCategory } from './budget'
 import database from './database'
 
 const ITEM_TYPE_PREFIX = 't'
@@ -39,6 +39,20 @@ export const recordTransaction = async (transaction) => {
     const categoryAmount = categoryAmounts[categoryId] || 0
     await subtractAmountFromBudgetCategory(categoryId, categoryAmount)
   }
+}
+
+/**
+ * Put a transaction's amounts back in the budget categories they came out of,
+ * then delete it: recordTransaction in reverse.
+ */
+export const unrecordTransaction = async (transaction) => {
+  const categoryAmounts = transaction.categoryAmounts || {}
+  for (const categoryId in categoryAmounts) {
+    const categoryAmount = categoryAmounts[categoryId] || 0
+    await addAmountToBudgetCategory(categoryId, categoryAmount)
+  }
+
+  await deleteTransaction(transaction._id)
 }
 
 export const savePendingTransaction = async () => {

@@ -114,6 +114,19 @@ class CustomWorld {
     await this.page.evaluate((d) => window.__budgetDb.put(d), doc);
   }
 
+  // Changes fields of a document already seeded, keeping the rest.
+  async updateSeededDoc(id, changes) {
+    await this.ensureAppLoaded();
+    await this.page.evaluate(
+      async (docId, c) => {
+        const doc = await window.__budgetDb.get(docId);
+        await window.__budgetDb.put({ ...doc, ...c });
+      },
+      id,
+      changes
+    );
+  }
+
   async seedAccount(name) {
     const id = `a-${randomUUID()}`;
     await this.seed({ _id: id, name });

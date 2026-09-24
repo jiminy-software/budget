@@ -4,7 +4,7 @@ import DetailHeader from '../components/DetailHeader.svelte'
 import MenuItem from '../components/MenuItem.svelte'
 import MissingScreen from '../components/MissingScreen.svelte'
 import { getAccount } from '../data/accounts'
-import { deleteTransaction, getTransaction } from '../data/transactions'
+import { getTransaction, unrecordTransaction } from '../data/transactions'
 import { formatDateCompact } from '../helpers/dates'
 import { formatMoney } from '../helpers/numbers'
 import { push } from 'svelte-spa-router'
@@ -48,7 +48,7 @@ const onDeleteTransaction = async () => {
     `Are you sure you want to delete the ${formatMoney(transaction.amountTotal || 0)} expense at ${transaction.who}?`
   )
   if (confirmed) {
-    await deleteTransaction(id)
+    await unrecordTransaction(transaction)
     push('/transactions')
   }
 }
