@@ -1,10 +1,9 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const {
-  daysAgoFromPhrase,
   dollarsToCents,
   formatDollars,
-  timestampDaysAgo,
+  timestampForDay,
 } = require('../support/conversions');
 
 const describeRows = (rows) =>
@@ -14,9 +13,10 @@ const describeRows = (rows) =>
 
 // A seeded expense, e.g. a $12.34 "Groceries" expense from "Checking", with
 // an optional payee (at "Corner Store") before the account and an optional
-// day (dated yesterday) after it. An account or category the scenario has not
-// seeded is seeded here, the category with $100.00 budgeted and remaining.
-// A payee left unnamed is "Somewhere", since the app shows the payee.
+// day (dated yesterday, or dated 2026-03-01) after it. An account or category
+// the scenario has not seeded is seeded here, the category with $100.00
+// budgeted and remaining. A payee left unnamed is "Somewhere", since the app
+// shows the payee.
 Given(
   /^an? \$([0-9.]+) "([^"]*)" expense(?: at "([^"]*)")? from "([^"]*)"(?: dated (.+))?$/,
   async function (dollars, category, who, account, day) {
@@ -25,7 +25,7 @@ Given(
       accountId: await this.ensureAccount(account),
       categoryId: await this.ensureCategory(category),
       amountTotal: dollarsToCents(dollars),
-      timestamp: day ? timestampDaysAgo(daysAgoFromPhrase(day)) : Date.now(),
+      timestamp: day ? timestampForDay(day) : Date.now(),
     });
   }
 );
@@ -107,4 +107,34 @@ Then('the transactions list should say {string}', async function (text) {
           : `it says "${shown}"`)
     );
   }
+});
+
+When(/^I open the \$([0-9,.]+) transaction$/, async function (dollars) {
+  await this.openTransaction(formatDollars(dollars));
+});
+
+// One step for the whole screen, as on the recurring expense screen: the
+// scenario's Given, read back off what the screen shows.
+Then(
+  /^it should show an? \$([0-9,.]+) "([^"]*)" expense at "([^"]*)" from "([^"]*)" dated (\S+)$/,
+  async function (dollars, category, who, account, date) {
+    const shown = await this.readTransactionDetail();
+    assert.strictEqual(shown.amount, formatDollars(dollars), 'the amount');
+    assert.strictEqual(shown.who, who, 'the payee');
+    assert.strictEqual(shown.account, account, 'the account');
+    assert.strictEqual(shown.date, date, 'the date');
+    assert.ok(
+      shown.categories.some((tag) => tag.startsWith(`${category} `)),
+      `Expected a "${category}" category tag, but the screen shows ` +
+        (shown.categories.length === 0 ? 'none' : shown.categories.join(', '))
+    );
+  }
+);
+
+// Delete opens a confirm(), as on the recurring expense screen.
+When('I delete it from the expense menu', async function () {
+  await this.openDetailMenu();
+  this.acceptNextConfirm();
+  await this.clickElementWithText('[role="menuitem"]', 'Delete expense');
+  await this.waitForHeadingStartingWith('Transactions');
 });

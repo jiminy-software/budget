@@ -15,6 +15,7 @@ import Home from './Home.svelte'
 import NotFound from './NotFound.svelte'
 import RecurringView from './RecurringView.svelte'
 import Settings from './Settings.svelte'
+import TransactionView from './TransactionView.svelte'
 import Transactions from './Transactions.svelte'
 
 // Router docs at https://github.com/ItalyPaleAle/svelte-spa-router
@@ -35,6 +36,7 @@ const routes = {
   '/expense/who/': ExpenseWho,
   '/recurring/:id': RecurringView,
   '/settings': Settings,
+  '/transaction/:id': TransactionView,
   '/transactions': Transactions,
   '*': NotFound,
 }

@@ -93,6 +93,31 @@ Given(
   }
 );
 
+// A full envelope, refilled this month, so opening the app adds nothing to
+// it. A scenario that cares what remains says so with the step below.
+Given(
+  /^a budget category "([^"]*)" with \$([0-9.]+) budgeted$/,
+  async function (name, dollars) {
+    const cents = dollarsToCents(dollars);
+    await this.seedCategory(name, {
+      budgeted: cents,
+      remaining: cents,
+      refilled: yearMonthMonthsAgo(0),
+    });
+  }
+);
+
+// Sets what remains rather than checking it: whatever the steps before it
+// took out, this is what the category holds from here.
+Given(
+  /^the "([^"]*)" category has \$([0-9.]+) remaining$/,
+  async function (name, dollars) {
+    await this.updateSeededDoc(await this.ensureCategory(name), {
+      remaining: dollarsToCents(dollars),
+    });
+  }
+);
+
 Given('an account named {string}', async function (name) {
   await this.seedAccount(name);
 });

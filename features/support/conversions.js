@@ -57,11 +57,21 @@ const timestampDaysAgo = (daysAgo) => {
   return when.getTime();
 };
 
+// The day a scenario dated something: a yyyy-mm-dd date when it named one
+// outright, otherwise a phrase counted back from today. Local noon either way.
+const timestampForDay = (phrase) => {
+  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(phrase)) {
+    return new Date(`${phrase} 12:00:00`).getTime();
+  }
+  return timestampDaysAgo(daysAgoFromPhrase(phrase));
+};
+
 module.exports = {
   daysAgoFromPhrase,
   dollarsToCents,
   formatDollars,
   timestampDaysAgo,
+  timestampForDay,
   wordToNumber,
   yearMonthMonthsAgo,
 };

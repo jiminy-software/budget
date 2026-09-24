@@ -49,6 +49,7 @@ https://jiminy-software.github.io/budget/
   * [ ] Simple JSON import/export
 - [x] Auto-refill categories each month
 - [x] Record recurring expenses (rent, mortgage) automatically each month
+- [x] Delete a transaction, putting its amount back in its category
 - [ ] Enable adding category during new-transaction workflow
 - [ ] Enable adding account during new-transaction workflow
 - [x] Add done and cancel buttons when adding an account

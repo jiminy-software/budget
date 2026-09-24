@@ -29,9 +29,12 @@ const refillBudgetCategory = async (category) => {
   await updateCategory(category._id, { remaining, refilled })
 }
 
-export const subtractAmountFromBudgetCategory = async (categoryId, amountToSubtract) => {
+export const addAmountToBudgetCategory = async (categoryId, amountToAdd) => {
   const category = await getCategory(categoryId)
   const oldRemaining = category.remaining || 0
-  const newRemaining = oldRemaining - amountToSubtract
+  const newRemaining = oldRemaining + amountToAdd
   await updateCategory(categoryId, { remaining: newRemaining })
 }
+
+export const subtractAmountFromBudgetCategory = async (categoryId, amountToSubtract) =>
+  addAmountToBudgetCategory(categoryId, -amountToSubtract)

@@ -114,6 +114,19 @@ class CustomWorld {
     await this.page.evaluate((d) => window.__budgetDb.put(d), doc);
   }
 
+  // Changes fields of a document already seeded, keeping the rest.
+  async updateSeededDoc(id, changes) {
+    await this.ensureAppLoaded();
+    await this.page.evaluate(
+      async (docId, c) => {
+        const doc = await window.__budgetDb.get(docId);
+        await window.__budgetDb.put({ ...doc, ...c });
+      },
+      id,
+      changes
+    );
+  }
+
   async seedAccount(name) {
     const id = `a-${randomUUID()}`;
     await this.seed({ _id: id, name });
@@ -378,6 +391,49 @@ class CustomWorld {
           `but the list shows ${unwanted.date} "${unwanted.who}" ${unwanted.amount}`
       );
     }
+  }
+
+  // Opens the transaction the given amount identifies, from whichever list
+  // is on screen.
+  async openTransaction(amount) {
+    await this.waitForTransactionRow({ amount });
+    await this.page.evaluate((amt) => {
+      [...document.querySelectorAll('.transaction-row')]
+        .find(
+          (row) =>
+            row.querySelector('.transaction-amount').textContent.trim() === amt
+        )
+        .click();
+    }, amount);
+    try {
+      await this.page.waitForSelector('.transaction-detail', { timeout: 5000 });
+    } catch (e) {
+      throw new Error(
+        `Opening the ${amount} transaction led to no transaction screen.`
+      );
+    }
+  }
+
+  // Everything the transaction screen shows, so one step can check it all and
+  // say what was wrong.
+  async readTransactionDetail() {
+    return this.page.evaluate(() => {
+      const textOf = (selector) => {
+        const element = document.querySelector(selector);
+        return element ? element.textContent.trim() : null;
+      };
+      return {
+        who: textOf('.payee'),
+        amount: textOf('.total'),
+        account: textOf('.account-value'),
+        date: textOf('.date-value'),
+        note: textOf('.note-value'),
+        // Each tag reads "Groceries · $12.34".
+        categories: [...document.querySelectorAll('.category-tag')].map((tag) =>
+          tag.textContent.trim()
+        ),
+      };
+    });
   }
 
   // The next due date, payee and amount of each row of the recurring list on
