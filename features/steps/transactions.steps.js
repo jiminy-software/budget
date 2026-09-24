@@ -130,3 +130,11 @@ Then(
     );
   }
 );
+
+// Delete opens a confirm(), as on the recurring expense screen.
+When('I delete it from the expense menu', async function () {
+  await this.openDetailMenu();
+  this.acceptNextConfirm();
+  await this.clickElementWithText('[role="menuitem"]', 'Delete expense');
+  await this.waitForHeadingStartingWith('Transactions');
+});

@@ -1,11 +1,13 @@
 <script>
 import CategoryTags from '../components/CategoryTags.svelte'
 import DetailHeader from '../components/DetailHeader.svelte'
+import MenuItem from '../components/MenuItem.svelte'
 import MissingScreen from '../components/MissingScreen.svelte'
 import { getAccount } from '../data/accounts'
-import { getTransaction } from '../data/transactions'
+import { deleteTransaction, getTransaction } from '../data/transactions'
 import { formatDateCompact } from '../helpers/dates'
 import { formatMoney } from '../helpers/numbers'
+import { push } from 'svelte-spa-router'
 
 export let params = {} // URL parameters provided by router
 
@@ -38,6 +40,16 @@ const loadTransaction = async (transactionId) => {
 const loadAccount = async (accountId) => {
   if (accountId) {
     account = await getAccount(accountId)
+  }
+}
+
+const onDeleteTransaction = async () => {
+  const confirmed = confirm(
+    `Are you sure you want to delete the ${formatMoney(transaction.amountTotal || 0)} expense at ${transaction.who}?`
+  )
+  if (confirmed) {
+    await deleteTransaction(id)
+    push('/transactions')
   }
 }
 </script>
@@ -124,7 +136,13 @@ const loadAccount = async (accountId) => {
                  actionLabel="Back to transactions" actionUrl="#/transactions"
                  detail={missingDetail} />
 {:else}
-  <DetailHeader title="Expense" backUrl="#/transactions" />
+  <DetailHeader title="Expense" backUrl="#/transactions" menuLabel="Expense actions">
+    <svelte:fragment slot="menu">
+      <MenuItem danger on:click={onDeleteTransaction}>
+        Delete expense
+      </MenuItem>
+    </svelte:fragment>
+  </DetailHeader>
 
   <div class="transaction-detail">
     <div class="headline">
