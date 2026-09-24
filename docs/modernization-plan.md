@@ -256,6 +256,5 @@ Couchbase, released in small steps.
 Phases 0 → 1 → 2 → 4 were the critical path to "installable, offline-usable
 on a phone," and are done. Phases 5–8 are independent follow-ons.
 
-Not yet scheduled, and to discuss before it becomes a phase: a visual
-redesign. (A storage interface to avoid lock-in is no longer needed: sync
+(A storage interface to avoid lock-in is no longer needed: sync
 keeps PouchDB and speaks CouchDB's open protocol.)
