@@ -39,7 +39,7 @@ Status: planned. Nothing below has been built yet.
   | | App | CouchDB |
   |---|---|---|
   | Local | `http://localhost:8080` | `http://localhost:5984` |
-  | Production | `https://budget.<domain>` (Pages) | `https://sync.<domain>` |
+  | Production | `https://budget.<domain>` (Pages) | `https://budget-sync.<domain>` |
 
 - **On iPhone, install the app to the home screen.** In a Safari tab, a
   site's IndexedDB is deleted after 7 days of Safari use without a visit to
@@ -90,11 +90,13 @@ hidden until the last step.
   offline or signed out. Also run the refill and recurring step after the
   first pull when a device signs in.
 - [ ] **8. Production sync server.** Needs a domain, the Pages custom domain
-  (a GitHub setting, so Matt's call), and a CouchDB host on `sync.<domain>`
-  with TLS, `couch_peruser`, CORS for `budget.<domain>`, and the cookie
-  settings. Layerbase ($15/mo) needs checking for custom-domain support;
-  your own server with Caddy (about $5/mo) supports one. Set the app's
-  default server per environment. Test on an iPhone with the app installed.
+  (a GitHub setting, so Matt's call), and a CouchDB host on
+  `budget-sync.<domain>` with TLS, `couch_peruser`, CORS for
+  `budget.<domain>`, and the cookie settings. Layerbase ($15/mo) needs
+  checking for custom-domain support; your own server with Caddy (about
+  $5/mo) supports one. The subdomain is `budget-sync`, not `sync`, so other
+  apps can have their own. Set the app's default server per environment.
+  Test on an iPhone with the app installed.
 - [ ] **9. Show sync in the app.** Restore the gear button that's commented
   out in `src/views/Budget.svelte`. Settings is the last screen on the old
   design.
