@@ -246,39 +246,16 @@ deprecation warning is gone.
   runes (`$state`, `$props`, `$derived`), event attribute syntax, etc.
   Pure modernization; can trail indefinitely.
 
-## Phase 8 — Cross-device sync via Couchbase (later, separate project)
+## Phase 8 — Cross-device sync (separate project)
 
-Decision: target **Couchbase** (Capella free tier) rather than
-self-administering CouchDB.
-
-**Known risk, so this phase starts with a feasibility spike:** PouchDB's
-replication protocol is CouchDB's. Couchbase's sync layer (Sync Gateway /
-Capella App Services) dropped its CouchDB-compatible replication API in
-recent major versions, and Couchbase Lite has no browser edition. So
-"PouchDB syncs to Couchbase" must be proven, not assumed.
-
-The sync UI is written but unfinished, so its entry point is deliberately
-hidden: the gear button on the Budget view is commented out in
-`src/views/Budget.svelte`, leaving `#/settings` reachable only by typing the
-URL. Restore that button as part of finishing this phase — otherwise the
-feature ships invisible.
-
-- [ ] Spike: can a browser PWA sync with Capella App Services at all today?
-  Investigate current Sync Gateway REST capabilities, any web client SDK,
-  or community bridges. Time-boxed; produces a go/no-go.
-- [ ] If **go**: design auth flow + per-user data partitioning on Couchbase;
-  replace/adapt `configureSync` in `src/data/database.js`.
-- [ ] If **no-go**: revisit options with the same criteria (managed, free
-  tier, no server admin) — e.g. hosted CouchDB (Cloudant) — or a custom thin
-  sync endpoint. Everything above the local PouchDB is unaffected either
-  way, which is why this phase is safely last.
+Moved to `docs/cross-device-syncing-options.md`: CouchDB rather than
+Couchbase, released in small steps.
 
 ## Sequencing
 
 Phases 0 → 1 → 2 → 4 were the critical path to "installable, offline-usable
 on a phone," and are done. Phases 5–8 are independent follow-ons.
 
-Not yet scheduled, and to discuss before they become phases: a visual
-redesign, and whether to extract a clean storage interface before trying
-Couchbase — so that anyone building on this repo is not locked into whatever
-Phase 8 concludes.
+Not yet scheduled, and to discuss before it becomes a phase: a visual
+redesign. (A storage interface to avoid lock-in is no longer needed: sync
+keeps PouchDB and speaks CouchDB's open protocol.)
