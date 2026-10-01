@@ -13,7 +13,7 @@ Status: planned. Nothing below has been built yet.
   already targets it. There's no lock-in: CouchDB is an open protocol, so
   changing host is a replication.
   - Couchbase was rejected: Couchbase Lite JS would replace PouchDB, and the
-    free Capella cluster shuts off after 72 idle hours.
+    risks from vendor lock-in outweigh the benefits of using Couchbase.
   - DynamoDB was rejected: the sync would have to be written by hand.
     Amplify DataStore, AWS's ready-made version, reaches end of life May 1,
     2027.
