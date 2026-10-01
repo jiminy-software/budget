@@ -71,25 +71,27 @@ hidden until the last step.
 - [ ] **3. Give recurring occurrences fixed IDs.** `recordWhileDue` in
   `src/data/recurringTransactions.js` records each occurrence as
   `t-<recurringId>-<yyyy-mm-dd>`.
-- [ ] **4. Spike: sync as it is today, locally.** No code and no release.
+- [ ] **4. Apply visual redesign to Settings page.** Settings is the last
+  screen on the old design and should get the new design before users see it.
+- [ ] **5. Spike: sync as it is today, locally.** No code and no release.
   Use `make db` with users A and B. Check that two browser profiles signed
   in as A sync both ways, that B sees nothing and gets a 401 or 403 from A's
   database, and what happens when A records an expense offline on both
   profiles in the same category.
-- [ ] **5. Sign in with CouchDB's session cookie.** The Settings form posts
+- [ ] **6. Sign in with CouchDB's session cookie.** The Settings form posts
   to `/_session`. `configureSync` drops the Basic Auth `fetch` wrapper for
   `credentials: 'include'` and gets the username from `GET /_session`. Add
   the cookie settings to `db-config/couchdb/docker.ini`, and check when
   CouchDB renews the cookie.
-- [ ] **6. Resume sync at launch.** If `GET /_session` says the session is
+- [ ] **7. Resume sync at launch.** If `GET /_session` says the session is
   still valid, start sync. If not, keep working offline and show a "Sign in
   to sync" prompt that doesn't block the app.
-- [ ] **7. Pull before refilling.** In `startUp` (`src/App.svelte`), pull
+- [ ] **8. Pull before refilling.** In `startUp` (`src/App.svelte`), pull
   once (`replicate.from`) with a timeout of about 5 s before the refill and
   recurring step, then start live sync. Skip the pull immediately when
   offline or signed out. Also run the refill and recurring step after the
   first pull when a device signs in.
-- [ ] **8. Production sync server.** Needs a domain, the Pages custom domain
+- [ ] **9. Production sync server.** Needs a domain, the Pages custom domain
   (a GitHub setting, so Matt's call), and a CouchDB host on
   `budget-sync.<domain>` with TLS, `couch_peruser`, CORS for
   `budget.<domain>`, and the cookie settings. Layerbase ($15/mo) needs
@@ -97,22 +99,21 @@ hidden until the last step.
   $5/mo) supports one. The subdomain is `budget-sync`, not `sync`, so other
   apps can have their own. Set the app's default server per environment.
   Test on an iPhone with the app installed.
-- [ ] **9. Show sync in the app.** Restore the gear button that's commented
-  out in `src/views/Budget.svelte`. Settings is the last screen on the old
-  design.
+- [ ] **10. Show sync in the app.** Restore the gear button that's commented
+  out in `src/views/Budget.svelte`.
 
-Parts 2, 3 and 7 are verified by Gherkin scenarios, with the wording
+Parts 2, 3 and 8 are verified by Gherkin scenarios, with the wording
 approved before any steps are written. The fixed-ID steps also seed the
 generated transaction, as though it had arrived by sync, and check that the
 balance doesn't change. The UI suite runs no CouchDB, but that is an option,
-so steps 4 to 6 are checked by hand against `make db` or the tests are
+so steps 5 to 7 are checked by hand against `make db` or the tests are
 updated to require CouchDB (preferably the latter, to avoid depending on
 manual tests).
 
 ## Not solved here
 
 - **Category balances.** `remaining` is read, changed and written back, so
-  two offline edits to one category keep only one of them. Steps 2, 3 and 7
+  two offline edits to one category keep only one of them. Steps 2, 3 and 8
   make this rarer; only deriving balances from transactions ends it.
 - **Merging existing data.** Signing a device that already has its own data
   into an account would either merge two budgets or discard one of them.
