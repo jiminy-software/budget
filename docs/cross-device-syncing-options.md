@@ -55,9 +55,8 @@ hidden until the last step.
 
 - [ ] **1. Adopt budget-data 2.2.0.** Waiting on Matt to publish the spec.
   It's additive: `accountId: ""` means a transaction not tied to an account,
-  and a negative amount is money going into a category. Update the README's
-  Data Structure line and the spec version in `CLAUDE.md`, which still
-  says 2.0.0.
+  and a negative amount is money going into a category. Update the spec
+  version in the README's Data Structure line and in `AGENTS.md`.
 - [ ] **2. Record each refill as a transaction.** The refill in
   `src/data/budget.js` goes through `recordTransaction` with
   `who: "Monthly refill"`, `accountId: ""`, and `-budgeted` as both the
