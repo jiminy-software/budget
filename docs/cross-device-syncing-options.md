@@ -113,7 +113,7 @@ checked by hand against `make db`.
   two offline edits to one category keep only one of them. Steps 2, 3 and 7
   make this rarer; only deriving balances from transactions ends it.
 - **Merging existing data.** Signing a device that already has its own data
-  into an account merges two budgets.
+  into an account would either merge two budgets or discard one of them.
 
 ## Sources
 
