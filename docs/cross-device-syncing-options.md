@@ -104,8 +104,10 @@ hidden until the last step.
 Parts 2, 3 and 7 are verified by Gherkin scenarios, with the wording
 approved before any steps are written. The fixed-ID steps also seed the
 generated transaction, as though it had arrived by sync, and check that the
-balance doesn't change. The UI suite runs no CouchDB, so steps 4 to 6 are
-checked by hand against `make db`.
+balance doesn't change. The UI suite runs no CouchDB, but that is an option,
+so steps 4 to 6 are checked by hand against `make db` or the tests are
+updated to require CouchDB (preferably the latter, to avoid depending on
+manual tests).
 
 ## Not solved here
 
