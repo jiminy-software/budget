@@ -1,5 +1,6 @@
 import { getCategory, listCategories, updateCategory } from './categories'
-import { getCurrentYearMonthString, getMonthAfter, isInPast } from '../helpers/dates'
+import { recordTransaction } from './transactions'
+import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
 const fillBudgetCategory = async (category) => {
   let budgeted = category.budgeted || 0
@@ -20,13 +21,25 @@ export const refillBudgetCategories = async () => {
   }))
 }
 
+/**
+ * Refill the category once for each month since it was last refilled, each
+ * one recorded as a transaction dated the 1st of its month. A refill puts
+ * money into the category, so its amount is negative.
+ */
 const refillBudgetCategory = async (category) => {
-  let {budgeted, remaining, refilled} = category
+  const { _id, budgeted } = category
+  let refilled = category.refilled
   for (let i = 0; isInPast(refilled) && (i < 100); i++) {
-    remaining += budgeted
     refilled = getMonthAfter(refilled)
+    await recordTransaction({
+      who: 'Monthly refill',
+      amountTotal: -budgeted,
+      categoryAmounts: { [_id]: -budgeted },
+      timestamp: getNoonTimestamp(`${refilled}-01`),
+    })
+    // Saved after each one, so an interrupted catch-up cannot repeat a month.
+    await updateCategory(_id, { refilled })
   }
-  await updateCategory(category._id, { remaining, refilled })
 }
 
 export const addAmountToBudgetCategory = async (categoryId, amountToAdd) => {

@@ -355,18 +355,21 @@ class CustomWorld {
   }
 
   // Waits for a row showing the given amount (as the app formats it, e.g.
-  // "$1,200.00") and, if given, the given compact date (e.g. "3/1/26").
-  async waitForTransactionRow({ amount, date }) {
+  // "$1,200.00") and, if given, the given payee and compact date (e.g.
+  // "3/1/26").
+  async waitForTransactionRow({ amount, who, date }) {
     try {
       await this.page.waitForFunction(
-        (amt, dt) =>
+        (amt, payee, dt) =>
           [...document.querySelectorAll('.transaction-row')].some(
             (row) =>
               row.querySelector('.transaction-amount').textContent.trim() === amt &&
+              (!payee || row.querySelector('.transaction-who').textContent.trim() === payee) &&
               (!dt || row.querySelector('.transaction-date').textContent.trim() === dt)
           ),
         { timeout: 5000 },
         amount,
+        who || null,
         date || null
       );
     } catch (e) {
@@ -376,8 +379,8 @@ class CustomWorld {
           ? 'no transactions'
           : rows.map((r) => `${r.date} "${r.who}" ${r.amount}`).join(', ');
       throw new Error(
-        `Expected a ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
-          `but the list shows ${shown}`
+        `Expected a ${amount}${who ? ` "${who}"` : ''} transaction` +
+          `${date ? ` dated ${date}` : ''}, but the list shows ${shown}`
       );
     }
   }

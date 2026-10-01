@@ -4,6 +4,11 @@ import { formatMoney } from '../helpers/numbers'
 
 export let transactions = []
 export let emptyMessage = 'No matching transactions found.'
+
+// An expense shows as a plain amount. A negative one, such as a refill, is
+// money going into a category, so it shows with a plus sign instead.
+const formatAmountMoved = amount =>
+  amount < 0 ? '+' + formatMoney(-amount) : formatMoney(amount)
 </script>
 
 <style>
@@ -63,7 +68,7 @@ export let emptyMessage = 'No matching transactions found.'
     <a class="transaction-row" href="#/transaction/{ _id }">
       <span class="transaction-date">{ formatDateCompact(timestamp) }</span>
       <span class="transaction-who">{ who }</span>
-      <span class="transaction-amount">{ formatMoney(amountTotal) }</span>
+      <span class="transaction-amount">{ formatAmountMoved(amountTotal) }</span>
     </a>
   {:else}
     <p class="no-transactions">{ emptyMessage }</p>
