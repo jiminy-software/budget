@@ -3,7 +3,7 @@
 Goal: one family's budget on several devices, with each family's data kept
 apart by the server, and no password prompt each time the app opens.
 
-Status: planned. Nothing below has been built yet.
+Status: in progress. Step 1 is done.
 
 ## Decisions
 
@@ -53,7 +53,7 @@ Status: planned. Nothing below has been built yet.
 Each step is its own release PR. Groundwork comes first, and sync stays
 hidden until the last step.
 
-- [ ] **1. Adopt budget-data 3.0.0.** Waiting on Matt to publish the spec.
+- [x] **1. Adopt budget-data 3.0.0.**
   A transaction not tied to an account omits `accountId`, and a negative
   amount is money going into a category. It's a major version because a
   2.x reader can rely on every transaction having an `accountId`. Update the
