@@ -44,9 +44,9 @@ Status: planned. Nothing below has been built yet.
 - **On iPhone, install the app to the home screen.** In a Safari tab, a
   site's IndexedDB is deleted after 7 days of Safari use without a visit to
   that site. An installed web app counts only the days it's used.
-- Passkeys may replace the one-time password later, with a Lambda issuing a
-  JWT cookie that the sync server passes on as a Bearer header. The sync
-  code wouldn't change.
+- Passkeys were considered as another option for handling authentication, but
+  they did not seem to offer any advantages over CouchDB's `AuthSession` cookie
+  and would have required more server-side infrastructure, and so were rejected.
 
 ## Steps
 
