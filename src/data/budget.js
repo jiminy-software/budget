@@ -2,12 +2,13 @@ import { getCategory, listCategories, updateCategory } from './categories'
 import { recordTransaction } from './transactions'
 import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
-const fillBudgetCategory = async (category) => {
-  let budgeted = category.budgeted || 0
-  let remaining = category.remaining || 0
-  remaining += budgeted
-  let refilled = getCurrentYearMonthString()
-  await updateCategory(category._id, { remaining, refilled })
+/**
+ * A new category's first fill, recorded as that month's refill.
+ */
+const fillBudgetCategory = async ({ _id, budgeted }) => {
+  const refilled = getCurrentYearMonthString()
+  await recordRefill(_id, budgeted, refilled)
+  await updateCategory(_id, { refilled })
 }
 
 export const refillBudgetCategories = async () => {
@@ -22,26 +23,32 @@ export const refillBudgetCategories = async () => {
 }
 
 /**
- * Refill the category once for each month since it was last refilled, each
- * one recorded as a transaction dated the 1st of its month. A refill puts
- * money into the category, so its amount is negative. A category with
- * nothing budgeted advances without one.
+ * Refill the category once for each month since it was last refilled.
  */
 const refillBudgetCategory = async (category) => {
   const { _id, budgeted } = category
   let refilled = category.refilled
   for (let i = 0; isInPast(refilled) && (i < 100); i++) {
     refilled = getMonthAfter(refilled)
-    if (budgeted) {
-      await recordTransaction({
-        who: 'Monthly refill',
-        amountTotal: -budgeted,
-        categoryAmounts: { [_id]: -budgeted },
-        timestamp: getNoonTimestamp(`${refilled}-01`),
-      })
-    }
+    await recordRefill(_id, budgeted, refilled)
     // Saved after each one, so an interrupted catch-up cannot repeat a month.
     await updateCategory(_id, { refilled })
+  }
+}
+
+/**
+ * Record a month's refill as a transaction dated the 1st of that month. A
+ * refill puts money into the category, so its amount is negative. A category
+ * with nothing budgeted gets none.
+ */
+const recordRefill = async (categoryId, budgeted, yearMonth) => {
+  if (budgeted) {
+    await recordTransaction({
+      who: 'Monthly refill',
+      amountTotal: -budgeted,
+      categoryAmounts: { [categoryId]: -budgeted },
+      timestamp: getNoonTimestamp(`${yearMonth}-01`),
+    })
   }
 }
 

@@ -43,3 +43,11 @@ Feature: Monthly refills
     When I open the Transactions tab
       And I open the +$100.00 transaction
     Then it should show a +$100.00 "Monthly refill" for "Utilities" dated 10/1/26 with no account
+
+  Scenario: Recording a new category's first fill as a refill
+    Given today is 2026-10-15
+    When I go to the new category page
+      And I name the category "Groceries"
+      And I set its monthly amount to $500.00
+      And I open the Transactions tab
+    Then I should see a +$500.00 "Monthly refill" transaction dated 10/1/26
