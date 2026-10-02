@@ -45,7 +45,7 @@ const loadAccount = async (accountId) => {
 
 const onDeleteTransaction = async () => {
   const confirmed = confirm(
-    `Are you sure you want to delete the ${formatMoney(transaction.amountTotal || 0)} expense at ${transaction.who}?`
+    `Are you sure you want to delete the ${formatMoney(transaction.amountTotal || 0)} transaction at ${transaction.who}?`
   )
   if (confirmed) {
     await unrecordTransaction(transaction)
@@ -130,16 +130,16 @@ const onDeleteTransaction = async () => {
 </style>
 
 {#if missingDetail}
-  <DetailHeader title="Expense" backUrl="#/transactions" />
-  <MissingScreen heading="This expense isn't here"
+  <DetailHeader title="Transaction" backUrl="#/transactions" />
+  <MissingScreen heading="This transaction isn't here"
                  body="It may have been deleted, or the link that brought you here is out of date."
                  actionLabel="Back to transactions" actionUrl="#/transactions"
                  detail={missingDetail} />
 {:else}
-  <DetailHeader title="Expense" backUrl="#/transactions" menuLabel="Expense actions">
+  <DetailHeader title="Transaction" backUrl="#/transactions" menuLabel="Transaction actions">
     <svelte:fragment slot="menu">
       <MenuItem danger on:click={onDeleteTransaction}>
-        Delete expense
+        Delete transaction
       </MenuItem>
     </svelte:fragment>
   </DetailHeader>

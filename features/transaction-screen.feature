@@ -17,7 +17,7 @@ Feature: Transaction screen
       And a $40.00 "Groceries" expense from "Checking"
     When I open the Transactions tab
       And I open the $12.34 transaction
-      And I delete it from the expense menu
+      And I delete it from the transaction menu
     Then I should see a $40.00 transaction
       But I should NOT see a $12.34 transaction
 
@@ -27,5 +27,5 @@ Feature: Transaction screen
       And the "Groceries" category has $150.00 remaining
     When I open the Transactions tab
       And I open the $10.00 transaction
-      And I delete it from the expense menu
+      And I delete it from the transaction menu
     Then the budget overview should show "Groceries" with $160.00 remaining
