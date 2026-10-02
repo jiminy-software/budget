@@ -20,6 +20,17 @@ const formatAmountWithPrecision = (amount, precision) => {
 export const formatMoney = amount => formatMoneyWithPrecision(amount, 2)
 
 /**
+ * Format an amount moved, such as a transaction's: money out shows as a plain
+ * amount, and money in (a negative amount, such as a refill) shows with a
+ * plus sign instead: 1840 becomes "$18.40" and -10000 becomes "+$100.00".
+ *
+ * @param amount
+ * @returns {string}
+ */
+export const formatMoneyMoved = amount =>
+  amount < 0 ? '+' + formatMoney(-amount) : formatMoney(amount)
+
+/**
  * As formatMoney, but rounded to whole dollars: 60000 becomes "$600".
  *
  * @param amount

@@ -1,4 +1,5 @@
 const { Given, Then } = require('@cucumber/cucumber');
+const assert = require('assert');
 const {
   dollarsToCents,
   formatDollars,
@@ -49,5 +50,23 @@ Then(
   /^I should NOT see an? "([^"]*)" transaction dated (\S+)$/,
   async function (who, date) {
     await this.assertNoTransactionRow({ who, date });
+  }
+);
+
+// The transaction screen's counterpart to the expense step "it should show a
+// $12.34 ... expense", for a refill: money in, and no account to show.
+Then(
+  /^it should show an? \+\$([0-9,.]+) "([^"]*)" for "([^"]*)" dated (\S+) with no account$/,
+  async function (dollars, who, category, date) {
+    const shown = await this.readTransactionDetail();
+    assert.strictEqual(shown.amount, '+' + formatDollars(dollars), 'the amount');
+    assert.strictEqual(shown.who, who, 'the payee');
+    assert.strictEqual(shown.date, date, 'the date');
+    assert.strictEqual(shown.account, null, 'the account row');
+    assert.ok(
+      shown.categories.some((tag) => tag.startsWith(`${category} `)),
+      `Expected a "${category}" category tag, but the screen shows ` +
+        (shown.categories.length === 0 ? 'none' : shown.categories.join(', '))
+    );
   }
 );

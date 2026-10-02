@@ -37,3 +37,9 @@ Feature: Monthly refills
       And I open the +$100.00 transaction
       And I delete it from the transaction menu
     Then the budget overview should show "Utilities" with $30.00 remaining
+
+  Scenario: Opening a refill
+    Given a "Utilities" refill of $100.00 dated 2026-10-01
+    When I open the Transactions tab
+      And I open the +$100.00 transaction
+    Then it should show a +$100.00 "Monthly refill" for "Utilities" dated 10/1/26 with no account

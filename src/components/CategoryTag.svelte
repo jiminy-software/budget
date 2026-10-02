@@ -1,6 +1,6 @@
 <script>
 import { getCategory } from '../data/categories'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 
 export let amount = 0
 export let categoryId = ''
@@ -31,4 +31,4 @@ const loadCategory = async (categoryId) => {
 }
 </style>
 
-<span class="category-tag">{ name } &middot; { formatMoney(amount) }</span>
+<span class="category-tag">{ name } &middot; { formatMoneyMoved(amount) }</span>
