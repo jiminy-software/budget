@@ -1,14 +1,12 @@
 import { getCategory, listCategories, updateCategory } from './categories'
-import { recordTransaction } from './transactions'
+import { addTransaction } from './transactions'
 import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
 /**
  * A new category's first fill, recorded as that month's refill.
  */
 const fillBudgetCategory = async ({ _id, budgeted }) => {
-  const refilled = getCurrentYearMonthString()
-  await recordRefill(_id, budgeted, refilled)
-  await updateCategory(_id, { refilled })
+  await recordRefill(_id, budgeted, getCurrentYearMonthString())
 }
 
 export const refillBudgetCategories = async () => {
@@ -31,22 +29,30 @@ const refillBudgetCategory = async (category) => {
   for (let i = 0; isInPast(refilled) && (i < 100); i++) {
     refilled = getMonthAfter(refilled)
     await recordRefill(_id, budgeted, refilled)
-    // Saved after each one, so an interrupted catch-up cannot repeat a month.
-    await updateCategory(_id, { refilled })
   }
 }
 
 /**
- * Record a month's refill as a transaction dated the 1st of that month. A
- * refill puts money into the category, so its amount is negative. A category
- * with nothing budgeted gets none.
+ * Add a month's refill to the category, and record it as a transaction dated
+ * the 1st of that month. A refill puts money into the category, so its amount
+ * is negative. A category with nothing budgeted gets no transaction.
  *
- * Its ID is fixed by the category and month, so two devices that refill the
- * same month before they sync record the same transaction, not two.
+ * The transaction's ID is fixed by the category and month, so two devices
+ * that refill the same month before they sync record the same transaction,
+ * not two.
  */
 const recordRefill = async (categoryId, budgeted, yearMonth) => {
+  // The balance and month are saved in one write, before the transaction and
+  // not through recordTransaction, so an interruption can lose only the
+  // transaction. A month left unsaved would retry its fixed ID, get a 409,
+  // and block every later refill.
+  const { remaining } = await getCategory(categoryId)
+  await updateCategory(categoryId, {
+    remaining: (remaining || 0) + (budgeted || 0),
+    refilled: yearMonth,
+  })
   if (budgeted) {
-    await recordTransaction({
+    await addTransaction({
       _id: `t-${categoryId}-${yearMonth}`,
       who: 'Monthly refill',
       amountTotal: -budgeted,
