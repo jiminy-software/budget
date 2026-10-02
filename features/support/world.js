@@ -2,8 +2,26 @@ const { setWorldConstructor } = require('@cucumber/cucumber');
 const puppeteer = require('puppeteer');
 const { randomUUID } = require('crypto');
 const { yearMonthMonthsAgo } = require('./conversions');
+const { COUCHDB_AUTH, createScenarioDb, deleteScenarioDb } = require('./couchdb');
 
 const BASE_URL = 'http://localhost:5000';
+
+// Makes every page the given tab loads from now on believe it is local noon on
+// the given day.
+const freezeClockOn = (page, dateString) =>
+  page.evaluateOnNewDocument((date) => {
+    const RealDate = Date;
+    const fixed = new RealDate(`${date}T12:00:00`).getTime();
+    function FrozenDate(...args) {
+      if (!(this instanceof FrozenDate)) return String(new RealDate(fixed));
+      return args.length ? new RealDate(...args) : new RealDate(fixed);
+    }
+    FrozenDate.prototype = RealDate.prototype;
+    FrozenDate.now = () => fixed;
+    FrozenDate.parse = RealDate.parse;
+    FrozenDate.UTC = RealDate.UTC;
+    window.Date = FrozenDate;
+  }, dateString);
 
 class CustomWorld {
   constructor() {
@@ -35,23 +53,55 @@ class CustomWorld {
 
   // Fixes the date every page the browser loads from now on believes it is:
   // local noon on the given day. Registered before the app is opened; if it
-  // already is, a reload brings the shim into effect.
+  // already is, a reload brings the shim into effect. A second device added
+  // later gets the same date.
   async freezeClockAt(dateString) {
-    await this.page.evaluateOnNewDocument((date) => {
-      const RealDate = Date;
-      const fixed = new RealDate(`${date}T12:00:00`).getTime();
-      function FrozenDate(...args) {
-        if (!(this instanceof FrozenDate)) return String(new RealDate(fixed));
-        return args.length ? new RealDate(...args) : new RealDate(fixed);
-      }
-      FrozenDate.prototype = RealDate.prototype;
-      FrozenDate.now = () => fixed;
-      FrozenDate.parse = RealDate.parse;
-      FrozenDate.UTC = RealDate.UTC;
-      window.Date = FrozenDate;
-    }, dateString);
+    this.frozenDate = dateString;
+    await freezeClockOn(this.page, dateString);
     if (this.page.url().startsWith(BASE_URL)) {
       await this.page.reload({ waitUntil: 'networkidle0' });
+    }
+  }
+
+  // Another device on the same budget: a browser context of its own, so it
+  // has storage of its own, with the app open.
+  async addSecondDevice() {
+    const context = await this.browser.createBrowserContext();
+    this.secondPage = await context.newPage();
+    if (this.frozenDate) {
+      await freezeClockOn(this.secondPage, this.frozenDate);
+    }
+    await this.onSecondDevice(() => this.ensureAppLoaded());
+  }
+
+  // Runs the given steps against the second device instead of the first.
+  async onSecondDevice(steps) {
+    const firstPage = this.page;
+    this.page = this.secondPage;
+    try {
+      return await steps();
+    } finally {
+      this.page = firstPage;
+    }
+  }
+
+  // One round of syncing through the scenario's own CouchDB database: the
+  // first device, then the second, each pushing its changes and then pulling
+  // the others'. PouchDB's own replication does it, as the app's sync will.
+  async syncDevices() {
+    this.remoteDbUrl = this.remoteDbUrl || (await createScenarioDb());
+    await this.ensureAppLoaded();
+    for (const page of [this.page, this.secondPage]) {
+      await page.evaluate(
+        async (url, auth) => {
+          const db = window.__budgetDb;
+          const remote = new db.constructor(url, { auth });
+          await db.replicate.to(remote);
+          await db.replicate.from(remote);
+        },
+        this.remoteDbUrl,
+        COUCHDB_AUTH
+      );
     }
   }
 
@@ -596,6 +646,11 @@ class CustomWorld {
       await this.browser.close();
       this.browser = null;
       this.page = null;
+      this.secondPage = null;
+    }
+    if (this.remoteDbUrl) {
+      await deleteScenarioDb(this.remoteDbUrl);
+      this.remoteDbUrl = null;
     }
   }
 }
