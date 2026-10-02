@@ -14,7 +14,7 @@ import { push } from 'svelte-spa-router'
 export let params = {} // URL parameters provided by router
 
 let category = {}
-let transactions = []
+let transactions = null // Until loaded, so the list never shows a false "none"
 let missingDetail = ''
 
 $: id = params.id || ''
@@ -92,7 +92,9 @@ const onDeleteCategory = async () => {
     </svelte:fragment>
   </DetailHeader>
 
-  <TransactionList {transactions} />
+  {#if transactions}
+    <TransactionList {transactions} />
+  {/if}
 {/if}
 
 <ButtonRow>
