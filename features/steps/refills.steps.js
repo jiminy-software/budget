@@ -27,3 +27,10 @@ Then(
     });
   }
 );
+
+Then(
+  /^I should NOT see an? "([^"]*)" transaction dated (\S+)$/,
+  async function (who, date) {
+    await this.assertNoTransactionRow({ who, date });
+  }
+);

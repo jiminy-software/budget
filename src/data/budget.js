@@ -24,19 +24,22 @@ export const refillBudgetCategories = async () => {
 /**
  * Refill the category once for each month since it was last refilled, each
  * one recorded as a transaction dated the 1st of its month. A refill puts
- * money into the category, so its amount is negative.
+ * money into the category, so its amount is negative. A category with
+ * nothing budgeted advances without one.
  */
 const refillBudgetCategory = async (category) => {
   const { _id, budgeted } = category
   let refilled = category.refilled
   for (let i = 0; isInPast(refilled) && (i < 100); i++) {
     refilled = getMonthAfter(refilled)
-    await recordTransaction({
-      who: 'Monthly refill',
-      amountTotal: -budgeted,
-      categoryAmounts: { [_id]: -budgeted },
-      timestamp: getNoonTimestamp(`${refilled}-01`),
-    })
+    if (budgeted) {
+      await recordTransaction({
+        who: 'Monthly refill',
+        amountTotal: -budgeted,
+        categoryAmounts: { [_id]: -budgeted },
+        timestamp: getNoonTimestamp(`${refilled}-01`),
+      })
+    }
     // Saved after each one, so an interrupted catch-up cannot repeat a month.
     await updateCategory(_id, { refilled })
   }

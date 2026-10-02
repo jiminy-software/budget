@@ -386,18 +386,24 @@ class CustomWorld {
     }
   }
 
-  // The opposite of waitForTransactionRow: fails if such a row is on screen.
-  // There is nothing to wait for, so this reads the list as it stands, which
-  // is safe once a step has waited for the rows that should be there.
-  async assertNoTransactionRow({ amount, date }) {
+  // The opposite of waitForTransactionRow: fails if a row matching whichever
+  // of these are given is on screen. There is nothing to wait for, so this
+  // reads the list as it stands. That is safe once a step has waited for the
+  // rows that should be there, or on the category screen, which renders the
+  // list only once its transactions have loaded.
+  async assertNoTransactionRow({ amount, who, date }) {
     await this.page.waitForSelector('.transaction-list');
     const rows = await this.readTransactionRows();
     const unwanted = rows.find(
-      (row) => row.amount === amount && (!date || row.date === date)
+      (row) =>
+        (!amount || row.amount === amount) &&
+        (!who || row.who === who) &&
+        (!date || row.date === date)
     );
     if (unwanted) {
       throw new Error(
-        `Expected no ${amount} transaction${date ? ` dated ${date}` : ''}, ` +
+        `Expected no${amount ? ` ${amount}` : ''}${who ? ` "${who}"` : ''} ` +
+          `transaction${date ? ` dated ${date}` : ''}, ` +
           `but the list shows ${unwanted.date} "${unwanted.who}" ${unwanted.amount}`
       );
     }
