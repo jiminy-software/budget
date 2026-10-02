@@ -51,6 +51,9 @@ docker compose run --rm app npm run test:ui -- --name "^Record an expense$"
   dependency tree.
 - **Puppeteer's Chrome** lives in a named volume, so `--rm` doesn't discard
   it.
+- **CouchDB:** the app container depends on the `db` service, so anything
+  run in it starts CouchDB too. Host runs need `make db` for the syncing
+  scenarios.
 - **Host runs** need Node 22, 24 or 26, because Cucumber 13 refuses to start
   on anything else.
 - **Windows hosts:** the dev server in the container doesn't see host edits
@@ -166,6 +169,11 @@ tests; the suite is the safety net.
 - **Service worker.** It registers during test runs (`localhost` is a secure
   context), and the offline and installability scenarios in
   `features/budget.feature` depend on it.
+- **Devices and syncing.** `addSecondDevice` opens the app in a browser
+  context of its own, and `onSecondDevice` runs steps against it.
+  `syncDevices` syncs each device once, with PouchDB's own replication,
+  through a CouchDB database made for the scenario. Only scenarios that sync
+  need CouchDB.
 
 ### Build and deploy
 

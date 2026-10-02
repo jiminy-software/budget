@@ -20,6 +20,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # The syncing scenarios sync through it, as they do locally.
+      - run: docker compose up -d db
       # Builds the app and serves it before driving it with Puppeteer, so a
       # broken build fails here too.
       - run: npm run test:ui

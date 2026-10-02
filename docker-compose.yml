@@ -14,6 +14,12 @@ services:
       - puppeteer_cache:/root/.cache/puppeteer
     working_dir: /app/
     command: "npm run dev"
+    # The syncing scenarios sync through the db service, which the browser in
+    # this container reaches by name.
+    depends_on:
+      - db
+    environment:
+      COUCHDB_URL: 'http://db:5984'
 
   db:
     image: couchdb:3
