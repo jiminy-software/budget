@@ -103,12 +103,10 @@ hidden until the last step.
   out in `src/views/Budget.svelte`.
 
 Parts 2, 3 and 8 are verified by Gherkin scenarios, with the wording
-approved before any steps are written. The fixed-ID steps also seed the
-generated transaction, as though it had arrived by sync, and check that the
-balance doesn't change. The UI suite runs no CouchDB, but that is an option,
-so steps 5 to 7 are checked by hand against `make db` or the tests are
-updated to require CouchDB (preferably the latter, to avoid depending on
-manual tests).
+approved before any steps are written. The UI suite syncs through CouchDB,
+each device a browser context of its own, so the fixed-ID scenarios have two
+devices make the same change offline and then sync. Steps 5 to 7 are tested
+the same way rather than by hand.
 
 ## Not solved here
 
