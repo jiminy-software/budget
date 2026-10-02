@@ -71,9 +71,10 @@ hidden until the last step.
   - Two devices that refill offline and then sync end up with one identical
     refill, because PouchDB's deterministic revisions make the same change
     the same revision. A 409 on insert isn't handled yet.
-- [ ] **3. Give recurring occurrences fixed IDs.** `recordWhileDue` in
+- [x] **3. Give recurring occurrences fixed IDs.** `recordWhileDue` in
   `src/data/recurringTransactions.js` records each occurrence as
-  `t-<recurringId>-<yyyy-mm-dd>`.
+  `t-<recurringId>-<yyyy-mm-dd>`. It saves `nextDue` first, so an
+  interruption can lose only an occurrence, never block later ones.
 - [ ] **4. Apply visual redesign to Settings page.** Settings is the last
   screen on the old design and should get the new design before users see it.
 - [ ] **5. Spike: sync as it is today, locally.** No code and no release.
