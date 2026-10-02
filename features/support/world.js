@@ -20,6 +20,7 @@ class CustomWorld {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
       this.page = await this.browser.newPage();
+
       // Puppeteer waits 30s by default, but anything the app shows appears
       // well within 5s, so a missing element fails fast. Page loads get
       // longer, since networkidle0 also waits out the service worker's
