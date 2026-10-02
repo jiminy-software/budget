@@ -72,17 +72,20 @@ const recordWhileDue = async (recurringTransaction, today) => {
   const { _id, who, accountId, amountTotal, categoryAmounts, note } = recurringTransaction
   let nextDue = recurringTransaction.nextDue
   for (let i = 0; (nextDue <= today) && (i < 100); i++) {
+    const due = nextDue
+    // Saved before the occurrence is recorded, so an interruption can lose
+    // only that occurrence. Saved after, it would retry the fixed ID, get a
+    // 409, and block every later occurrence.
+    nextDue = getSameDayNextMonth(due)
+    await updateRecurringTransaction(_id, { nextDue })
     await recordTransaction({
-      _id: `t-${_id}-${nextDue}`,
+      _id: `t-${_id}-${due}`,
       who,
       accountId,
       amountTotal,
       categoryAmounts,
       note,
-      timestamp: getNoonTimestamp(nextDue),
+      timestamp: getNoonTimestamp(due),
     })
-    // Saved after each one, so an interrupted catch-up cannot repeat a month.
-    nextDue = getSameDayNextMonth(nextDue)
-    await updateRecurringTransaction(_id, { nextDue })
   }
 }
