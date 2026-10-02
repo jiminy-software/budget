@@ -40,10 +40,14 @@ const refillBudgetCategory = async (category) => {
  * Record a month's refill as a transaction dated the 1st of that month. A
  * refill puts money into the category, so its amount is negative. A category
  * with nothing budgeted gets none.
+ *
+ * Its ID is fixed by the category and month, so two devices that refill the
+ * same month before they sync record the same transaction, not two.
  */
 const recordRefill = async (categoryId, budgeted, yearMonth) => {
   if (budgeted) {
     await recordTransaction({
+      _id: `t-${categoryId}-${yearMonth}`,
       who: 'Monthly refill',
       amountTotal: -budgeted,
       categoryAmounts: { [categoryId]: -budgeted },

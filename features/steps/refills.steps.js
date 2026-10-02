@@ -1,10 +1,6 @@
 const { Given, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
-const {
-  dollarsToCents,
-  formatDollars,
-  timestampForDay,
-} = require('../support/conversions');
+const { dollarsToCents, formatDollars } = require('../support/conversions');
 
 // The month is named outright, not counted back from today, because "today
 // is" freezes only the browser's clock and not this process's. The category
@@ -28,7 +24,7 @@ Given(
     await this.seedRefill({
       categoryId: await this.ensureCategory(name),
       amount: dollarsToCents(dollars),
-      timestamp: timestampForDay(day),
+      day,
     });
   }
 );

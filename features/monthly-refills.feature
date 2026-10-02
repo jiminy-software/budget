@@ -51,3 +51,13 @@ Feature: Monthly refills
       And I set its monthly amount to $500.00
       And I open the Transactions tab
     Then I should see a +$500.00 "Monthly refill" transaction dated 10/1/26
+
+  Scenario: Recording one refill when two devices both refill before syncing
+    Given today is 2026-10-15
+      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-09
+      And the "Utilities" category has $30.00 remaining
+      And a second device synced with this one
+    When I reopen the app on both devices
+      And both devices sync
+    Then each device should show just one "Monthly refill" transaction dated 10/1/26
+      And each device's budget overview should show "Utilities" with $130.00 remaining

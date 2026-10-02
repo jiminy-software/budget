@@ -1,7 +1,7 @@
 const { setWorldConstructor } = require('@cucumber/cucumber');
 const puppeteer = require('puppeteer');
 const { randomUUID } = require('crypto');
-const { yearMonthMonthsAgo } = require('./conversions');
+const { timestampForDay, yearMonthMonthsAgo } = require('./conversions');
 const { COUCHDB_AUTH, createScenarioDb, deleteScenarioDb } = require('./couchdb');
 
 const BASE_URL = 'http://localhost:5000';
@@ -23,6 +23,14 @@ const freezeClockOn = (page, dateString) =>
     window.Date = FrozenDate;
   }, dateString);
 
+// Puppeteer waits 30s by default, but anything the app shows appears well
+// within 5s, so a missing element fails fast. Page loads get longer, since
+// networkidle0 also waits out the service worker's precaching.
+const setTimeoutsOn = (page) => {
+  page.setDefaultTimeout(5000);
+  page.setDefaultNavigationTimeout(15000);
+};
+
 class CustomWorld {
   constructor() {
     // The accounts and categories seeded so far, by the name the scenario
@@ -38,13 +46,7 @@ class CustomWorld {
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
       this.page = await this.browser.newPage();
-
-      // Puppeteer waits 30s by default, but anything the app shows appears
-      // well within 5s, so a missing element fails fast. Page loads get
-      // longer, since networkidle0 also waits out the service worker's
-      // precaching.
-      this.page.setDefaultTimeout(5000);
-      this.page.setDefaultNavigationTimeout(15000);
+      setTimeoutsOn(this.page);
 
       // Chrome fires this once, early, on any page it judges installable, so
       // the listener has to be in place before the first navigation rather
@@ -75,6 +77,7 @@ class CustomWorld {
   async addSecondDevice() {
     const context = await this.browser.createBrowserContext();
     this.secondPage = await context.newPage();
+    setTimeoutsOn(this.secondPage);
     if (this.frozenDate) {
       await freezeClockOn(this.secondPage, this.frozenDate);
     }
@@ -89,6 +92,23 @@ class CustomWorld {
       return await steps();
     } finally {
       this.page = firstPage;
+    }
+  }
+
+  // Runs the given steps against each device in turn, saying which one a
+  // failure came from.
+  async onEachDevice(steps) {
+    const devices = [
+      ['first device', steps],
+      ['second device', () => this.onSecondDevice(steps)],
+    ];
+    for (const [name, run] of devices) {
+      try {
+        await run();
+      } catch (e) {
+        e.message = `On the ${name}: ${e.message}`;
+        throw e;
+      }
     }
   }
 
@@ -227,15 +247,15 @@ class CustomWorld {
     });
   }
 
-  // A refill as the app records one: no account, and a negative amount,
-  // since it is money into the category.
-  async seedRefill({ categoryId, amount, timestamp }) {
+  // A refill as the app records one: the ID fixed by category and month, no
+  // account, and a negative amount, since it is money into the category.
+  async seedRefill({ categoryId, amount, day }) {
     await this.seed({
-      _id: `t-${randomUUID()}`,
+      _id: `t-${categoryId}-${day.slice(0, 7)}`,
       who: 'Monthly refill',
       amountTotal: -amount,
       categoryAmounts: { [categoryId]: -amount },
-      timestamp,
+      timestamp: timestampForDay(day),
     });
   }
 
@@ -417,8 +437,8 @@ class CustomWorld {
     );
   }
 
-  // Waits for a row showing the given amount (as the app formats it, e.g.
-  // "$1,200.00") and, if given, the given payee and compact date (e.g.
+  // Waits for a row showing whichever of these are given: the amount (as the
+  // app formats it, e.g. "$1,200.00"), the payee, and the compact date (e.g.
   // "3/1/26").
   async waitForTransactionRow({ amount, who, date }) {
     try {
@@ -426,12 +446,12 @@ class CustomWorld {
         (amt, payee, dt) =>
           [...document.querySelectorAll('.transaction-row')].some(
             (row) =>
-              row.querySelector('.transaction-amount').textContent.trim() === amt &&
+              (!amt || row.querySelector('.transaction-amount').textContent.trim() === amt) &&
               (!payee || row.querySelector('.transaction-who').textContent.trim() === payee) &&
               (!dt || row.querySelector('.transaction-date').textContent.trim() === dt)
           ),
         { timeout: 5000 },
-        amount,
+        amount || null,
         who || null,
         date || null
       );
@@ -442,7 +462,7 @@ class CustomWorld {
           ? 'no transactions'
           : rows.map((r) => `${r.date} "${r.who}" ${r.amount}`).join(', ');
       throw new Error(
-        `Expected a ${amount}${who ? ` "${who}"` : ''} transaction` +
+        `Expected a${amount ? ` ${amount}` : ''}${who ? ` "${who}"` : ''} transaction` +
           `${date ? ` dated ${date}` : ''}, but the list shows ${shown}`
       );
     }
