@@ -27,3 +27,13 @@ Feature: Monthly refills
     When I reopen the app
       And I go to the "Savings" category's details screen
     Then I should NOT see a "Monthly refill" transaction dated 10/1/26
+
+  Scenario: Deleting a refill takes its amount back out of its category
+    Given today is 2026-10-05
+      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-10
+      And a "Utilities" refill of $100.00 dated 2026-10-01
+      And the "Utilities" category has $130.00 remaining
+    When I go to the "Utilities" category's details screen
+      And I open the +$100.00 transaction
+      And I delete it from the transaction menu
+    Then the budget overview should show "Utilities" with $30.00 remaining

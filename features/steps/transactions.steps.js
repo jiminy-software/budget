@@ -107,8 +107,9 @@ Then('the transactions list should say {string}', async function (text) {
   }
 });
 
-When(/^I open the \$([0-9,.]+) transaction$/, async function (dollars) {
-  await this.openTransaction(formatDollars(dollars));
+// A refill's amount has the plus sign the list shows it with: +$100.00.
+When(/^I open the (\+?)\$([0-9,.]+) transaction$/, async function (plus, dollars) {
+  await this.openTransaction(plus + formatDollars(dollars));
 });
 
 // One step for the whole screen, as on the recurring expense screen: the

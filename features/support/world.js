@@ -177,6 +177,18 @@ class CustomWorld {
     });
   }
 
+  // A refill as the app records one: no account, and a negative amount,
+  // since it is money into the category.
+  async seedRefill({ categoryId, amount, timestamp }) {
+    await this.seed({
+      _id: `t-${randomUUID()}`,
+      who: 'Monthly refill',
+      amountTotal: -amount,
+      categoryAmounts: { [categoryId]: -amount },
+      timestamp,
+    });
+  }
+
   // A recurring expense already set up before the scenario starts, so a
   // scenario about catching up does not have to walk the expense flow first.
   async seedRecurringTransaction({

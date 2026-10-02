@@ -1,5 +1,9 @@
 const { Given, Then } = require('@cucumber/cucumber');
-const { dollarsToCents, formatDollars } = require('../support/conversions');
+const {
+  dollarsToCents,
+  formatDollars,
+  timestampForDay,
+} = require('../support/conversions');
 
 // The month is named outright, not counted back from today, because "today
 // is" freezes only the browser's clock and not this process's. The category
@@ -11,6 +15,19 @@ Given(
       budgeted: dollarsToCents(budgetedDollars),
       remaining: dollarsToCents(budgetedDollars),
       refilled,
+    });
+  }
+);
+
+// Only the transaction: the category's balance is left as the steps before
+// it set it.
+Given(
+  /^an? "([^"]*)" refill of \$([0-9.]+) dated (\d{4}-\d{2}-\d{2})$/,
+  async function (name, dollars, day) {
+    await this.seedRefill({
+      categoryId: await this.ensureCategory(name),
+      amount: dollarsToCents(dollars),
+      timestamp: timestampForDay(day),
     });
   }
 );
