@@ -58,7 +58,7 @@ hidden until the last step.
   amount is money going into a category. It's a major version because a
   2.x reader can rely on every transaction having an `accountId`. Update the
   spec version in the README's Data Structure line and in `AGENTS.md`.
-- [ ] **2. Record each refill as a transaction.** The refill in
+- [x] **2. Record each refill as a transaction.** The refill in
   `src/data/budget.js` goes through `recordTransaction` with
   `who: "Monthly refill"`, no `accountId`, and `-budgeted` as both the
   total and the category amount. It is dated noon on the 1st, and its ID is
@@ -66,8 +66,11 @@ hidden until the last step.
   - Catch up one month at a time, saving `refilled` after each, as
     `recordWhileDue` does. A category with nothing budgeted advances without
     a transaction.
+  - A new category's first fill is recorded the same way.
   - Deleting a refill reverses it through `unrecordTransaction`.
-  - `database.insert` needs a way to take a given ID.
+  - Two devices that refill offline and then sync end up with one identical
+    refill, because PouchDB's deterministic revisions make the same change
+    the same revision. A 409 on insert isn't handled yet.
 - [ ] **3. Give recurring occurrences fixed IDs.** `recordWhileDue` in
   `src/data/recurringTransactions.js` records each occurrence as
   `t-<recurringId>-<yyyy-mm-dd>`.
