@@ -149,7 +149,6 @@ JavaScript milliseconds.
   stylesheet.
 - **Typeface.** Plus Jakarta Sans is bundled through `@fontsource`, so it
   works offline.
-- **Settings** is the one screen still on the old design.
 
 ### UI tests (`features/`)
 

@@ -61,8 +61,8 @@ hidden until the last step.
 - [x] **2. Record each refill as a transaction.** The refill in
   `src/data/budget.js` saves the category's new balance and month in one
   write, then adds a transaction with `who: "Monthly refill"`, no
-  `accountId`, and `-budgeted` as both the total and the category amount. It is dated noon on the 1st, and its ID is
-  `t-<categoryId>-<yyyy-mm>`.
+  `accountId`, and `-budgeted` as both the total and the category amount.
+  It is dated noon on the 1st, and its ID is `t-<categoryId>-<yyyy-mm>`.
   - Catch up one month at a time. A category with nothing budgeted advances
     without a transaction. An interruption can lose only a transaction,
     never the money or the month.
@@ -75,7 +75,7 @@ hidden until the last step.
   `src/data/recurringTransactions.js` records each occurrence as
   `t-<recurringId>-<yyyy-mm-dd>`. It saves `nextDue` first, so an
   interruption can lose only an occurrence, never block later ones.
-- [ ] **4. Apply visual redesign to Settings page.** Settings is the last
+- [x] **4. Apply visual redesign to Settings page.** Settings is the last
   screen on the old design and should get the new design before users see it.
 - [ ] **5. Spike: sync as it is today, locally.** No code and no release.
   Use `make db` with users A and B. Check that two browser profiles signed

@@ -21,9 +21,7 @@ $link-color: #00668a; // primary-container
 // is not covered here will silently have no styling, so add its partial too.
 @import 'bootstrap/scss/root';
 @import 'bootstrap/scss/reboot';
-@import 'bootstrap/scss/type';
 @import 'bootstrap/scss/containers';
-@import 'bootstrap/scss/forms';
 
 // The utilities API generates the spacing classes, and must come last.
 @import 'bootstrap/scss/utilities/api';
