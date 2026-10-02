@@ -3,7 +3,7 @@
 Goal: one family's budget on several devices, with each family's data kept
 apart by the server, and no password prompt each time the app opens.
 
-Status: in progress. Step 1 is done.
+Status: in progress. Steps 1 to 5 are done.
 
 ## Decisions
 
@@ -23,8 +23,7 @@ Status: in progress. Step 1 is done.
 - **Generated transactions get fixed IDs** of the form
   `t-<source ID>-<period>`, so that two devices recording the same one make
   a single document, not two. If inserting one returns 409, it has already
-  been recorded (by sync, or before an interruption), and the balances are
-  left alone.
+  been recorded, by sync or before an interruption.
 - **Signing in** takes a password once (`POST /_session`), which is never
   stored. After that, CouchDB's own `AuthSession` cookie carries the
   session. It's HttpOnly, set with `same_site = strict`, and
@@ -94,22 +93,25 @@ hidden until the last step.
     same on every device. That is the category balances problem below.
   - `configureSync` passes `skip_setup: false`, so a mistyped server sends
     PouchDB trying to create a database, and the error says "You are not a
-    server admin". Step 6 should skip setup, since `couch_peruser` creates
+    server admin". Step 7 should skip setup, since `couch_peruser` creates
     the database.
-- [ ] **6. Sign in with CouchDB's session cookie.** The Settings form posts
+- [ ] **6. Derive category balances from transactions.** Step 5 showed
+  that two offline expenses in one category keep only one subtraction. See
+  `docs/category-balances-plan.md`.
+- [ ] **7. Sign in with CouchDB's session cookie.** The Settings form posts
   to `/_session`. `configureSync` drops the Basic Auth `fetch` wrapper for
   `credentials: 'include'` and gets the username from `GET /_session`. Add
   the cookie settings to `db-config/couchdb/docker.ini`, and check when
   CouchDB renews the cookie.
-- [ ] **7. Resume sync at launch.** If `GET /_session` says the session is
+- [ ] **8. Resume sync at launch.** If `GET /_session` says the session is
   still valid, start sync. If not, keep working offline and show a "Sign in
   to sync" prompt that doesn't block the app.
-- [ ] **8. Pull before refilling.** In `startUp` (`src/App.svelte`), pull
+- [ ] **9. Pull before refilling.** In `startUp` (`src/App.svelte`), pull
   once (`replicate.from`) with a timeout of about 5 s before the refill and
   recurring step, then start live sync. Skip the pull immediately when
   offline or signed out. Also run the refill and recurring step after the
   first pull when a device signs in.
-- [ ] **9. Production sync server.** Needs a domain, the Pages custom domain
+- [ ] **10. Production sync server.** Needs a domain, the Pages custom domain
   (a GitHub setting, so Matt's call), and a CouchDB host on
   `budget-sync.<domain>` with TLS, `couch_peruser`, CORS for
   `budget.<domain>`, and the cookie settings. Layerbase ($15/mo) needs
@@ -117,20 +119,17 @@ hidden until the last step.
   $5/mo) supports one. The subdomain is `budget-sync`, not `sync`, so other
   apps can have their own. Set the app's default server per environment.
   Test on an iPhone with the app installed.
-- [ ] **10. Show sync in the app.** Restore the gear button that's commented
+- [ ] **11. Show sync in the app.** Restore the gear button that's commented
   out in `src/views/Budget.svelte`.
 
-Parts 2, 3 and 8 are verified by Gherkin scenarios, with the wording
+Parts 2, 3, 6 and 9 are verified by Gherkin scenarios, with the wording
 approved before any steps are written. The UI suite syncs through CouchDB,
 each device a browser context of its own, so the fixed-ID scenarios have two
-devices make the same change offline and then sync. Steps 5 to 7 are tested
-the same way rather than by hand.
+devices make the same change offline and then sync. Steps 7 and 8 are
+tested the same way rather than by hand.
 
 ## Not solved here
 
-- **Category balances.** `remaining` is read, changed and written back, so
-  two offline edits to one category keep only one of them. Steps 2, 3 and 8
-  make this rarer; only deriving balances from transactions ends it.
 - **Merging existing data.** Signing a device that already has its own data
   into an account would either merge two budgets or discard one of them.
 
