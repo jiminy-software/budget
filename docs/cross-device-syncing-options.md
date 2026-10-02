@@ -61,8 +61,8 @@ hidden until the last step.
 - [x] **2. Record each refill as a transaction.** The refill in
   `src/data/budget.js` saves the category's new balance and month in one
   write, then adds a transaction with `who: "Monthly refill"`, no
-  `accountId`, and `-budgeted` as both the total and the category amount. It is dated noon on the 1st, and its ID is
-  `t-<categoryId>-<yyyy-mm>`.
+  `accountId`, and `-budgeted` as both the total and the category amount.
+  It is dated noon on the 1st, and its ID is `t-<categoryId>-<yyyy-mm>`.
   - Catch up one month at a time. A category with nothing budgeted advances
     without a transaction. An interruption can lose only a transaction,
     never the money or the month.
