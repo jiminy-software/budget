@@ -115,7 +115,7 @@ around it.
 
 ### Data spec
 
-Stored documents follow version 2.1.0 of the schema in the separate repo
+Stored documents follow version 3.0.0 of the schema in the separate repo
 `forevermatt/budget-data`, which the README records. Keep document shapes
 compatible with it. Amounts are integer cents, and timestamps are
 JavaScript milliseconds.

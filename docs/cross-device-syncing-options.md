@@ -3,7 +3,7 @@
 Goal: one family's budget on several devices, with each family's data kept
 apart by the server, and no password prompt each time the app opens.
 
-Status: planned. Nothing below has been built yet.
+Status: in progress. Step 1 is done.
 
 ## Decisions
 
@@ -53,13 +53,14 @@ Status: planned. Nothing below has been built yet.
 Each step is its own release PR. Groundwork comes first, and sync stays
 hidden until the last step.
 
-- [ ] **1. Adopt budget-data 2.2.0.** Waiting on Matt to publish the spec.
-  It's additive: `accountId: ""` means a transaction not tied to an account,
-  and a negative amount is money going into a category. Update the spec
-  version in the README's Data Structure line and in `AGENTS.md`.
+- [x] **1. Adopt budget-data 3.0.0.**
+  A transaction not tied to an account omits `accountId`, and a negative
+  amount is money going into a category. It's a major version because a
+  2.x reader can rely on every transaction having an `accountId`. Update the
+  spec version in the README's Data Structure line and in `AGENTS.md`.
 - [ ] **2. Record each refill as a transaction.** The refill in
   `src/data/budget.js` goes through `recordTransaction` with
-  `who: "Monthly refill"`, `accountId: ""`, and `-budgeted` as both the
+  `who: "Monthly refill"`, no `accountId`, and `-budgeted` as both the
   total and the category amount. It is dated noon on the 1st, and its ID is
   `t-<categoryId>-<yyyy-mm>`.
   - Catch up one month at a time, saving `refilled` after each, as
