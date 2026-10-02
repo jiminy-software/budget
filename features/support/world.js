@@ -387,10 +387,8 @@ class CustomWorld {
   }
 
   // The opposite of waitForTransactionRow: fails if a row matching whichever
-  // of these are given is on screen. There is nothing to wait for, so this
-  // reads the list as it stands. That is safe once a step has waited for the
-  // rows that should be there, or on the category screen, which renders the
-  // list only once its transactions have loaded.
+  // of these are given is on screen. Every screen renders the list only
+  // once its transactions have loaded, so waiting for the list is enough.
   async assertNoTransactionRow({ amount, who, date }) {
     await this.page.waitForSelector('.transaction-list');
     const rows = await this.readTransactionRows();

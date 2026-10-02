@@ -49,9 +49,7 @@ Then(
   }
 );
 
-// The same shape as the step above, negated: no such row is on screen. Put
-// it after the steps that wait for the rows that should be there, since it
-// reads the list rather than waiting on it.
+// The same shape as the step above, negated: no such row is on screen.
 Then(
   /^I should NOT see an? \$([0-9,.]+) transaction(?: dated (\S+))?$/,
   async function (dollars, date) {

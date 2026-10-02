@@ -10,7 +10,7 @@ import TransactionList from '../components/TransactionList.svelte'
 import { faDollarSign } from '@fortawesome/free-solid-svg-icons'
 import { onMount } from 'svelte'
 
-let transactions = []
+let transactions = null // Until loaded, so the list never shows a false "none"
 let recurringTransactions = []
 
 // The recurring expenses sit above the transactions when asked for, since
@@ -38,7 +38,9 @@ onMount(async () => {
   <RecurringList {recurringTransactions} />
 {/if}
 
-<TransactionList {transactions} emptyMessage="No transactions yet" />
+{#if transactions}
+  <TransactionList {transactions} emptyMessage="No transactions yet" />
+{/if}
 
 <ButtonRow>
   <Button icon={faDollarSign} name="expense" url="#/expense/new" />

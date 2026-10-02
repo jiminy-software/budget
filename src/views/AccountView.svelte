@@ -12,7 +12,7 @@ import { faDollarSign } from '@fortawesome/free-solid-svg-icons'
 export let params = {} // URL parameters provided by router
 
 let account = {}
-let transactions = []
+let transactions = null // Until loaded, so the list never shows a false "none"
 let missingDetail = ''
 
 $: id = params.id || ''
@@ -65,7 +65,9 @@ const renameAccount = async () => {
     </svelte:fragment>
   </DetailHeader>
 
-  <TransactionList {transactions} />
+  {#if transactions}
+    <TransactionList {transactions} />
+  {/if}
 {/if}
 
 <ButtonRow>
