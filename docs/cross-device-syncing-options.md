@@ -59,13 +59,13 @@ hidden until the last step.
   2.x reader can rely on every transaction having an `accountId`. Update the
   spec version in the README's Data Structure line and in `AGENTS.md`.
 - [x] **2. Record each refill as a transaction.** The refill in
-  `src/data/budget.js` goes through `recordTransaction` with
-  `who: "Monthly refill"`, no `accountId`, and `-budgeted` as both the
-  total and the category amount. It is dated noon on the 1st, and its ID is
+  `src/data/budget.js` saves the category's new balance and month in one
+  write, then adds a transaction with `who: "Monthly refill"`, no
+  `accountId`, and `-budgeted` as both the total and the category amount. It is dated noon on the 1st, and its ID is
   `t-<categoryId>-<yyyy-mm>`.
-  - Catch up one month at a time, saving `refilled` after each, as
-    `recordWhileDue` does. A category with nothing budgeted advances without
-    a transaction.
+  - Catch up one month at a time. A category with nothing budgeted advances
+    without a transaction. An interruption can lose only a transaction,
+    never the money or the month.
   - A new category's first fill is recorded the same way.
   - Deleting a refill reverses it through `unrecordTransaction`.
   - Two devices that refill offline and then sync end up with one identical
