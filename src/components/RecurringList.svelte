@@ -1,6 +1,6 @@
 <script>
 import { formatDateCompact, getNoonTimestamp } from '../helpers/dates'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 
 // The recurring expenses, laid out like TransactionList's rows, but dated by
 // when each is next due rather than by when something happened.
@@ -85,7 +85,7 @@ export let emptyMessage = 'No recurring expenses yet'
     <a class="recurring-row" href="#/recurring/{ _id }">
       <span class="recurring-next-due">{ formatDateCompact(getNoonTimestamp(nextDue)) }</span>
       <span class="recurring-who">{ who }</span>
-      <span class="recurring-amount">{ formatMoney(amountTotal) }</span>
+      <span class="recurring-amount">{ formatMoneyMoved(amountTotal) }</span>
     </a>
   {:else}
     <p class="no-recurring">{ emptyMessage }</p>

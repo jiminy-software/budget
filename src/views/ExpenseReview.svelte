@@ -8,7 +8,7 @@ import { savePendingRecurringTransaction } from '../data/recurringTransactions'
 import { savePendingTransaction, transactionInProgress, updatePendingTransaction } from '../data/transactions'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import { formatDateISO8601, getNoonTimestamp } from '../helpers/dates'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 import { push } from 'svelte-spa-router'
 
 let account = {}
@@ -190,7 +190,7 @@ const setTimestamp = event => {
 <div class="review">
   <div class="headline">
     <a class="payee" href="#/expense/who/">{ transaction.who }</a>
-    <a class="total" href="#/expense/amount/">{ formatMoney(amountTotal) }</a>
+    <a class="total" href="#/expense/amount/">{ formatMoneyMoved(amountTotal) }</a>
   </div>
 
   <div class="tags">

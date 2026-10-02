@@ -114,6 +114,7 @@ const getItemsFromResponse = (response) => {
 }
 
 const insert = async (itemTypePrefix, values) => {
+  // An _id among the values, such as a refill's fixed one, replaces this one.
   const response = await pouchDb.put({
     _id: itemTypePrefix + '-' + crypto.randomUUID(),
     ...values,

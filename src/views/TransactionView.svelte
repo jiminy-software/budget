@@ -6,7 +6,7 @@ import MissingScreen from '../components/MissingScreen.svelte'
 import { getAccount } from '../data/accounts'
 import { getTransaction, unrecordTransaction } from '../data/transactions'
 import { formatDateCompact } from '../helpers/dates'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 import { push } from 'svelte-spa-router'
 
 export let params = {} // URL parameters provided by router
@@ -45,7 +45,7 @@ const loadAccount = async (accountId) => {
 
 const onDeleteTransaction = async () => {
   const confirmed = confirm(
-    `Are you sure you want to delete the ${formatMoney(transaction.amountTotal || 0)} expense at ${transaction.who}?`
+    `Are you sure you want to delete the ${formatMoneyMoved(transaction.amountTotal || 0)} transaction at ${transaction.who}?`
   )
   if (confirmed) {
     await unrecordTransaction(transaction)
@@ -130,16 +130,16 @@ const onDeleteTransaction = async () => {
 </style>
 
 {#if missingDetail}
-  <DetailHeader title="Expense" backUrl="#/transactions" />
-  <MissingScreen heading="This expense isn't here"
+  <DetailHeader title="Transaction" backUrl="#/transactions" />
+  <MissingScreen heading="This transaction isn't here"
                  body="It may have been deleted, or the link that brought you here is out of date."
                  actionLabel="Back to transactions" actionUrl="#/transactions"
                  detail={missingDetail} />
 {:else}
-  <DetailHeader title="Expense" backUrl="#/transactions" menuLabel="Expense actions">
+  <DetailHeader title="Transaction" backUrl="#/transactions" menuLabel="Transaction actions">
     <svelte:fragment slot="menu">
       <MenuItem danger on:click={onDeleteTransaction}>
-        Delete expense
+        Delete transaction
       </MenuItem>
     </svelte:fragment>
   </DetailHeader>
@@ -147,7 +147,7 @@ const onDeleteTransaction = async () => {
   <div class="transaction-detail">
     <div class="headline">
       <span class="payee">{ transaction.who || '' }</span>
-      <span class="total">{ formatMoney(transaction.amountTotal || 0) }</span>
+      <span class="total">{ formatMoneyMoved(transaction.amountTotal || 0) }</span>
     </div>
 
     <div class="tags">
@@ -155,10 +155,12 @@ const onDeleteTransaction = async () => {
     </div>
 
     <div class="details">
-      <div class="detail-row">
-        <span class="detail-label">Account</span>
-        <span class="detail-value account-value">{ account.name || '' }</span>
-      </div>
+      {#if transaction.accountId}
+        <div class="detail-row">
+          <span class="detail-label">Account</span>
+          <span class="detail-value account-value">{ account.name || '' }</span>
+        </div>
+      {/if}
       <div class="detail-row">
         <span class="detail-label">Date</span>
         <span class="detail-value detail-date date-value">

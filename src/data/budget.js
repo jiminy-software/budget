@@ -1,12 +1,14 @@
 import { getCategory, listCategories, updateCategory } from './categories'
-import { getCurrentYearMonthString, getMonthAfter, isInPast } from '../helpers/dates'
+import { recordTransaction } from './transactions'
+import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
-const fillBudgetCategory = async (category) => {
-  let budgeted = category.budgeted || 0
-  let remaining = category.remaining || 0
-  remaining += budgeted
-  let refilled = getCurrentYearMonthString()
-  await updateCategory(category._id, { remaining, refilled })
+/**
+ * A new category's first fill, recorded as that month's refill.
+ */
+const fillBudgetCategory = async ({ _id, budgeted }) => {
+  const refilled = getCurrentYearMonthString()
+  await recordRefill(_id, budgeted, refilled)
+  await updateCategory(_id, { refilled })
 }
 
 export const refillBudgetCategories = async () => {
@@ -20,13 +22,38 @@ export const refillBudgetCategories = async () => {
   }))
 }
 
+/**
+ * Refill the category once for each month since it was last refilled.
+ */
 const refillBudgetCategory = async (category) => {
-  let {budgeted, remaining, refilled} = category
+  const { _id, budgeted } = category
+  let refilled = category.refilled
   for (let i = 0; isInPast(refilled) && (i < 100); i++) {
-    remaining += budgeted
     refilled = getMonthAfter(refilled)
+    await recordRefill(_id, budgeted, refilled)
+    // Saved after each one, so an interrupted catch-up cannot repeat a month.
+    await updateCategory(_id, { refilled })
   }
-  await updateCategory(category._id, { remaining, refilled })
+}
+
+/**
+ * Record a month's refill as a transaction dated the 1st of that month. A
+ * refill puts money into the category, so its amount is negative. A category
+ * with nothing budgeted gets none.
+ *
+ * Its ID is fixed by the category and month, so two devices that refill the
+ * same month before they sync record the same transaction, not two.
+ */
+const recordRefill = async (categoryId, budgeted, yearMonth) => {
+  if (budgeted) {
+    await recordTransaction({
+      _id: `t-${categoryId}-${yearMonth}`,
+      who: 'Monthly refill',
+      amountTotal: -budgeted,
+      categoryAmounts: { [categoryId]: -budgeted },
+      timestamp: getNoonTimestamp(`${yearMonth}-01`),
+    })
+  }
 }
 
 export const addAmountToBudgetCategory = async (categoryId, amountToAdd) => {

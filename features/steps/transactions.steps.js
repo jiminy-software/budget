@@ -49,9 +49,7 @@ Then(
   }
 );
 
-// The same shape as the step above, negated: no such row is on screen. Put
-// it after the steps that wait for the rows that should be there, since it
-// reads the list rather than waiting on it.
+// The same shape as the step above, negated: no such row is on screen.
 Then(
   /^I should NOT see an? \$([0-9,.]+) transaction(?: dated (\S+))?$/,
   async function (dollars, date) {
@@ -109,8 +107,9 @@ Then('the transactions list should say {string}', async function (text) {
   }
 });
 
-When(/^I open the \$([0-9,.]+) transaction$/, async function (dollars) {
-  await this.openTransaction(formatDollars(dollars));
+// A refill's amount has the plus sign the list shows it with: +$100.00.
+When(/^I open the (\+?)\$([0-9,.]+) transaction$/, async function (plus, dollars) {
+  await this.openTransaction(plus + formatDollars(dollars));
 });
 
 // One step for the whole screen, as on the recurring expense screen: the
@@ -132,9 +131,9 @@ Then(
 );
 
 // Delete opens a confirm(), as on the recurring expense screen.
-When('I delete it from the expense menu', async function () {
+When('I delete it from the transaction menu', async function () {
   await this.openDetailMenu();
   this.acceptNextConfirm();
-  await this.clickElementWithText('[role="menuitem"]', 'Delete expense');
+  await this.clickElementWithText('[role="menuitem"]', 'Delete transaction');
   await this.waitForHeadingStartingWith('Transactions');
 });

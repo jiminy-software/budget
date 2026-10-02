@@ -1,6 +1,6 @@
 <script>
 import { formatDateCompact } from '../helpers/dates'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 
 export let transactions = []
 export let emptyMessage = 'No matching transactions found.'
@@ -63,7 +63,7 @@ export let emptyMessage = 'No matching transactions found.'
     <a class="transaction-row" href="#/transaction/{ _id }">
       <span class="transaction-date">{ formatDateCompact(timestamp) }</span>
       <span class="transaction-who">{ who }</span>
-      <span class="transaction-amount">{ formatMoney(amountTotal) }</span>
+      <span class="transaction-amount">{ formatMoneyMoved(amountTotal) }</span>
     </a>
   {:else}
     <p class="no-transactions">{ emptyMessage }</p>
