@@ -6,7 +6,7 @@ import MissingScreen from '../components/MissingScreen.svelte'
 import { getAccount } from '../data/accounts'
 import { deleteRecurringTransaction, getRecurringTransaction } from '../data/recurringTransactions'
 import { formatDateCompact, getNoonTimestamp } from '../helpers/dates'
-import { formatMoney } from '../helpers/numbers'
+import { formatMoneyMoved } from '../helpers/numbers'
 import { push } from 'svelte-spa-router'
 
 export let params = {} // URL parameters provided by router
@@ -148,7 +148,7 @@ const onDeleteRecurringTransaction = async () => {
   <div class="recurring">
     <div class="headline">
       <span class="payee">{ recurringTransaction.who || '' }</span>
-      <span class="total">{ formatMoney(recurringTransaction.amountTotal || 0) }</span>
+      <span class="total">{ formatMoneyMoved(recurringTransaction.amountTotal || 0) }</span>
     </div>
 
     <div class="tags">
