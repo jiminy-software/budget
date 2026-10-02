@@ -77,11 +77,25 @@ hidden until the last step.
   interruption can lose only an occurrence, never block later ones.
 - [x] **4. Apply visual redesign to Settings page.** Settings is the last
   screen on the old design and should get the new design before users see it.
-- [ ] **5. Spike: sync as it is today, locally.** No code and no release.
+- [x] **5. Spike: sync as it is today, locally.** No code and no release.
   Use `make db` with users A and B. Check that two browser profiles signed
   in as A sync both ways, that B sees nothing and gets a 401 or 403 from A's
   database, and what happens when A records an expense offline on both
-  profiles in the same category.
+  profiles in the same category. Run with Puppeteer through the Settings
+  screen, in a script that was not kept. Found:
+  - Two profiles signed in as A sync both ways within seconds, balances
+    included.
+  - B gets 403 reading or writing A's database, and a profile signed in as
+    B gets nothing. A wrong password gets 401.
+  - Offline expenses on both of A's profiles: no error while offline, and
+    both synced about 3 s after reconnecting, with both transactions on
+    both profiles. But the category conflicts, and the winning revision
+    keeps only one expense's subtraction ($77.66 instead of $57.66), the
+    same on every device. That is the category balances problem below.
+  - `configureSync` passes `skip_setup: false`, so a mistyped server sends
+    PouchDB trying to create a database, and the error says "You are not a
+    server admin". Step 6 should skip setup, since `couch_peruser` creates
+    the database.
 - [ ] **6. Sign in with CouchDB's session cookie.** The Settings form posts
   to `/_session`. `configureSync` drops the Basic Auth `fetch` wrapper for
   `credentials: 'include'` and gets the username from `GET /_session`. Add
