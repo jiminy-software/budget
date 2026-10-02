@@ -74,7 +74,7 @@ hidden until the last step.
 - [ ] **3. Give recurring occurrences fixed IDs.** `recordWhileDue` in
   `src/data/recurringTransactions.js` records each occurrence as
   `t-<recurringId>-<yyyy-mm-dd>`.
-- [ ] **4. Apply visual redesign to Settings page.** Settings is the last
+- [x] **4. Apply visual redesign to Settings page.** Settings is the last
   screen on the old design and should get the new design before users see it.
 - [ ] **5. Spike: sync as it is today, locally.** No code and no release.
   Use `make db` with users A and B. Check that two browser profiles signed
