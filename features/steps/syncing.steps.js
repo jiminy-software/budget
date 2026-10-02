@@ -37,20 +37,27 @@ Then(
   }
 );
 
+// The transaction is named by its payee ("Monthly refill") or its amount
+// ($80.00).
 Then(
-  /^each device should show just one "([^"]*)" transaction dated (\S+)$/,
-  async function (who, date) {
+  /^each device should show just one (?:"([^"]*)"|\$([0-9,.]+)) transaction dated (\S+)$/,
+  async function (who, dollars, date) {
+    const amount = dollars && formatDollars(dollars);
+    const described = who ? `"${who}"` : amount;
     await this.onEachDevice(async () => {
       await this.openTab('Transactions');
       await this.waitForHeadingStartingWith('Transactions');
-      await this.waitForTransactionRow({ who, date });
+      await this.waitForTransactionRow({ who, amount, date });
       const matching = (await this.readTransactionRows()).filter(
-        (row) => row.who === who && row.date === date
+        (row) =>
+          (!who || row.who === who) &&
+          (!amount || row.amount === amount) &&
+          row.date === date
       );
       assert.strictEqual(
         matching.length,
         1,
-        `Expected one "${who}" transaction dated ${date}, but the list shows ` +
+        `Expected one ${described} transaction dated ${date}, but the list shows ` +
           matching.length
       );
     });

@@ -63,11 +63,17 @@ export const recordDueRecurringTransactions = async () => {
   }
 }
 
+/**
+ * Each occurrence's ID is fixed by the recurring transaction and its date, so
+ * two devices that record it before they sync record the same transaction,
+ * not two.
+ */
 const recordWhileDue = async (recurringTransaction, today) => {
   const { _id, who, accountId, amountTotal, categoryAmounts, note } = recurringTransaction
   let nextDue = recurringTransaction.nextDue
   for (let i = 0; (nextDue <= today) && (i < 100); i++) {
     await recordTransaction({
+      _id: `t-${_id}-${nextDue}`,
       who,
       accountId,
       amountTotal,

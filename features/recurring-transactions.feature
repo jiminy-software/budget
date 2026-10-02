@@ -60,3 +60,13 @@ Feature: Recurring transactions
       And I delete it from the recurring expense menu
       And I choose "Show recurring" from the menu
     Then the recurring list should say "No recurring expenses yet"
+
+  Scenario: Recording one occurrence when two devices both record it before syncing
+    Given today is 2026-03-01
+      And a recurring $80.00 "Phone" expense next due 2026-03-01
+      And the "Phone" category has $100.00 remaining
+      And a second device synced with this one
+    When I reopen the app on both devices
+      And both devices sync
+    Then each device should show just one $80.00 transaction dated 3/1/26
+      And each device's budget overview should show "Phone" with $20.00 remaining
