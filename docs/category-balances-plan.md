@@ -19,9 +19,11 @@ Status: planned. It lands before sign-in, step 7 of that plan.
   the field.
 - **A one-time migration** records each category's stored balance as a
   "Starting balance" transaction, `t-<categoryId>-start`, for whatever the
-  category's transactions don't already account for. It's dated when the
-  migration runs, shown in the lists like any transaction, and can be
-  deleted. Then `remaining` is removed from the category.
+  category's transactions don't already account for. It's dated noon on the
+  day before the category's oldest transaction (or the day the migration
+  runs, if it has none), since it stands for money that arrived before any
+  of them. It's shown in the lists like any transaction, and can be deleted.
+  Then `remaining` is removed from the category.
 - **A 409 now means "already recorded".** With no balance written beside
   them, inserting a fixed-ID transaction is the whole of recording it, so
   catch-up can insert first and then advance `refilled` or `nextDue`.
@@ -50,6 +52,8 @@ Each step is its own PR.
 - [ ] **4. Check speed.** Summing every transaction on each render should be
   fine for years of data. Time it with about 5,000 transactions, and add a
   PouchDB `_sum` view only if it's slow.
+- [ ] **5. Remove the migration** in a later release, once every device in
+  use has opened a version that ran it.
 
 ## Scenarios to draft
 
@@ -57,8 +61,9 @@ Each gets its wording approved before its steps are written.
 
 - Two devices each record an expense offline in one category, and both count
   once they sync. This fails today.
-- A category's stored balance becomes a "Starting balance" transaction, and
-  the balance doesn't change.
+- A category's stored balance becomes a "Starting balance" transaction,
+  dated the day before its oldest transaction, and the balance doesn't
+  change.
 - An overspent category's starting balance shows as money out.
 - An interrupted refill is finished on the next launch, not skipped.
 
