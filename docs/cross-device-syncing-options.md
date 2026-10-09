@@ -76,7 +76,7 @@ hidden until the last step.
   interruption can lose only an occurrence, never block later ones.
 - [x] **4. Apply visual redesign to Settings page.** Settings is the last
   screen on the old design and should get the new design before users see it.
-- [x] **5. Spike: sync as it is today, locally.** No code and no release.
+- [x] **5. Trial run of sync as it is today, locally.** No code and no release.
   Use `make db` with users A and B. Check that two browser profiles signed
   in as A sync both ways, that B sees nothing and gets a 401 or 403 from A's
   database, and what happens when A records an expense offline on both
