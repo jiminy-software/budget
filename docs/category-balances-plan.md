@@ -6,7 +6,8 @@ back, so when two devices each record an expense offline in one category,
 the sync keeps only one of the subtractions. Step 5 of
 `docs/cross-device-syncing-options.md` showed it: $77.66 instead of $57.66.
 
-Status: planned. It lands before sign-in, step 7 of that plan.
+Status: in progress. Step 1 is done. It lands before sign-in, step 7 of
+that plan.
 
 ## Decisions
 
@@ -17,13 +18,9 @@ Status: planned. It lands before sign-in, step 7 of that plan.
 - **budget-data 4.0.0 removes `remaining`** from categories and says how a
   balance is derived. It's a major version because a 3.x reader relies on
   the field.
-- **A one-time migration** records each category's stored balance as a
-  "Starting balance" transaction, `t-<categoryId>-start`, for whatever the
-  category's transactions don't already account for. It's dated noon on the
-  day before the category's oldest transaction (or the day the migration
-  runs, if it has none), since it stands for money that arrived before any
-  of them. It's shown in the lists like any transaction, and can be deleted.
-  Then `remaining` is removed from the category.
+- **No migration.** The one user doesn't need their data kept, so each
+  balance becomes whatever the stored transactions sum to. At start-up, the
+  unused `remaining` is deleted from each category.
 - **A 409 now means "already recorded".** With no balance written beside
   them, inserting a fixed-ID transaction is the whole of recording it, so
   catch-up can insert first and then advance `refilled` or `nextDue`.
@@ -32,19 +29,18 @@ Status: planned. It lands before sign-in, step 7 of that plan.
 
 Each step is its own PR.
 
-- [ ] **1. Publish budget-data 4.0.0.** In `forevermatt/budget-data`: drop
+- [x] **1. Publish budget-data 4.0.0.** In `forevermatt/budget-data`: drop
   `remaining` from categories, and define a balance as above.
-- [ ] **2. Derive balances, and migrate.**
+- [ ] **2. Derive balances.**
   - A function in `src/data/` sums each category's balance from
     `listTransactions()`. The budget overview reads it instead of
     `remaining`.
   - `recordTransaction` and `unrecordTransaction` only insert and delete.
     `addAmountToBudgetCategory` and its pair go.
-  - At start-up, before the refill, the migration inserts each category's
-    starting balance (a 409 means it already did), then removes
-    `remaining`.
-  - The UI tests seed a balance as a starting-balance transaction instead
-    of `remaining`.
+  - At start-up, before the refill, `remaining` is deleted from each
+    category that has it.
+  - The UI tests seed a full category as this month's refill, and any other
+    balance as a test-only "Starting balance" transaction.
   - The README and `AGENTS.md` move to budget-data 4.0.0.
 - [ ] **3. Simplify catch-up.** The refill and the recurring catch-up insert
   first, count a 409 as recorded, then advance `refilled` or `nextDue`. This
@@ -52,8 +48,8 @@ Each step is its own PR.
 - [ ] **4. Check speed.** Summing every transaction on each render should be
   fine for years of data. Time it with about 5,000 transactions, and add a
   PouchDB `_sum` view only if it's slow.
-- [ ] **5. Remove the migration** in a later release, once every device in
-  use has opened a version that ran it.
+- [ ] **5. Remove the `remaining` clean-up** in a later release, once every
+  device in use has opened a version that ran it.
 
 ## Scenarios to draft
 
@@ -61,10 +57,7 @@ Each gets its wording approved before its steps are written.
 
 - Two devices each record an expense offline in one category, and both count
   once they sync. This fails today.
-- A category's stored balance becomes a "Starting balance" transaction,
-  dated the day before its oldest transaction, and the balance doesn't
-  change.
-- An overspent category's starting balance shows as money out.
+- A category's stored `remaining` is deleted at start-up.
 - An interrupted refill is finished on the next launch, not skipped.
 
 ## Not solved here
