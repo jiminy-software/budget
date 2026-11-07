@@ -112,23 +112,25 @@ class CustomWorld {
     }
   }
 
-  // One round of syncing through the scenario's own CouchDB database: the
-  // first device, then the second, each pushing its changes and then pulling
-  // the others'. PouchDB's own replication does it, as the app's sync will.
+  // One round of syncing through the scenario's own CouchDB database: each
+  // device pushes its changes, and then each pulls, so both end up with
+  // everything. PouchDB's own replication does it, as the app's sync will.
   async syncDevices() {
     this.remoteDbUrl = this.remoteDbUrl || (await createScenarioDb());
     await this.ensureAppLoaded();
-    for (const page of [this.page, this.secondPage]) {
-      await page.evaluate(
-        async (url, auth) => {
-          const db = window.__budgetDb;
-          const remote = new db.constructor(url, { auth });
-          await db.replicate.to(remote);
-          await db.replicate.from(remote);
-        },
-        this.remoteDbUrl,
-        COUCHDB_AUTH
-      );
+    for (const direction of ['to', 'from']) {
+      for (const page of [this.page, this.secondPage]) {
+        await page.evaluate(
+          async (url, auth, direction) => {
+            const db = window.__budgetDb;
+            const remote = new db.constructor(url, { auth });
+            await db.replicate[direction](remote);
+          },
+          this.remoteDbUrl,
+          COUCHDB_AUTH,
+          direction
+        );
+      }
     }
   }
 
