@@ -80,14 +80,11 @@ around it.
 - **Entity modules:** `accounts.js`, `categories.js`, `transactions.js` and
   `recurringTransactions.js` are near-identical CRUD modules, one prefix
   each. Follow that pattern for a new type.
-- **Balances.** Each category stores `budgeted`, `remaining` (both in
-  cents), and `refilled` (`yyyy-mm`).
-  - `recordTransaction` and `unrecordTransaction` in `transactions.js` are
-    the only path by which an expense changes balances. Recording subtracts
-    the transaction's `categoryAmounts` from each category's `remaining`, and
-    deleting puts them back.
-  - Balances are read-modify-write. Recurring expenses are therefore
-    recorded one at a time, because two of them in one category would race.
+- **Balances.** Each category stores `budgeted` (in cents) and `refilled`
+  (`yyyy-mm`), but not its balance. `getCategoryBalances` in `budget.js`
+  sums it from every transaction's `categoryAmounts`, negated, so expenses
+  lower it and refills raise it. Nothing writes a balance, so two devices'
+  changes can't overwrite each other's.
 - **Start-up.** `startUp` in `App.svelte` runs these in order, and the router
   stays unmounted until they finish, so no view renders a pre-refill
   balance:
@@ -118,7 +115,7 @@ around it.
 
 ### Data spec
 
-Stored documents follow version 3.0.0 of the schema in the separate repo
+Stored documents follow version 4.0.0 of the schema in the separate repo
 `forevermatt/budget-data`, which the README records. Keep document shapes
 compatible with it. Amounts are integer cents, and timestamps are
 JavaScript milliseconds.
@@ -162,7 +159,9 @@ tests; the suite is the safety net.
   markup and `world.js` together.
 - **Seeding.** Seed data with `world.seed` and the `seed*` helpers.
   `ensureAccount` and `ensureCategory` create a named item once. A category
-  created that way has $100.00 budgeted and remaining.
+  created that way has $100.00 budgeted and this month's $100.00 refill.
+  `setCategoryBalance` sets any other balance with a test-only "Starting
+  balance" transaction.
 - **Dates.** `Given today is YYYY-MM-DD` freezes the browser clock, so it has
   to be a scenario's first step.
 - **Service worker.** It registers during test runs (`localhost` is a secure

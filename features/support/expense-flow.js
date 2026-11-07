@@ -34,11 +34,22 @@ const completeReview = async (world) => {
   await world.waitForBudgetOverview();
 };
 
+// The whole flow, for a scenario that records an expense in a single step.
+const recordExpense = async (world, { who, account, cents, category }) => {
+  await startExpense(world);
+  await sayItWasPaidTo(world, who);
+  await chooseAccount(world, account);
+  await enterAmount(world, cents);
+  await putFullAmountInCategory(world, category);
+  await completeReview(world);
+};
+
 module.exports = {
   chooseAccount,
   completeReview,
   enterAmount,
   putFullAmountInCategory,
+  recordExpense,
   sayItWasPaidTo,
   startExpense,
 };

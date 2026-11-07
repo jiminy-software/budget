@@ -15,8 +15,8 @@ const describeRows = (rows) =>
 // an optional payee (at "Corner Store") before the account and an optional
 // day (dated yesterday, or dated 2026-03-01) after it. An account or category
 // the scenario has not seeded is seeded here, the category with $100.00
-// budgeted and remaining. A payee left unnamed is "Somewhere", since the app
-// shows the payee.
+// budgeted and this month's $100.00 refill. A payee left unnamed is
+// "Somewhere", since the app shows the payee.
 Given(
   /^an? \$([0-9.]+) "([^"]*)" expense(?: at "([^"]*)")? from "([^"]*)"(?: dated (.+))?$/,
   async function (dollars, category, who, account, day) {
@@ -57,7 +57,8 @@ Then(
   }
 );
 
-// "Bakery", then "Farm Stand", then "Corner Store": every row, top to bottom.
+// "Bakery", then "Farm Stand", then "Corner Store": the top rows, in order.
+// Rows after them, such as the category's refill, don't matter.
 Then(
   /^the transactions list should show ("[^"]*"(?:, then "[^"]*")*)$/,
   async function (quotedNames) {
@@ -68,6 +69,7 @@ Then(
           JSON.stringify(
             [...document.querySelectorAll('.transaction-row .transaction-who')]
               .map((el) => el.textContent.trim())
+              .slice(0, names.length)
           ) === JSON.stringify(names),
         { timeout: 5000 },
         expected

@@ -1,6 +1,7 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
-const { formatDollars } = require('../support/conversions');
+const { dollarsToCents, formatDollars } = require('../support/conversions');
+const { recordExpense } = require('../support/expense-flow');
 
 // It starts with nothing until it syncs, like a device just signed in.
 Given('a second device', async function () {
@@ -21,6 +22,22 @@ When('I reopen the app on both devices', async function () {
     await this.page.waitForSelector('h2');
   });
 });
+
+// Recorded before "both devices sync", so neither device has the other's
+// expense yet, as if each were offline.
+When(
+  /^(I record|the second device records) an? \$([0-9.]+) "([^"]*)" expense from "([^"]*)"$/,
+  async function (device, dollars, category, account) {
+    const record = () =>
+      recordExpense(this, {
+        who: 'Somewhere',
+        account,
+        cents: dollarsToCents(dollars),
+        category,
+      });
+    await (device === 'I record' ? record() : this.onSecondDevice(record));
+  }
+);
 
 When('both devices sync', async function () {
   await this.syncDevices();

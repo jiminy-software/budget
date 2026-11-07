@@ -31,7 +31,6 @@ Feature: Monthly refills
   Scenario: Deleting a refill takes its amount back out of its category
     Given today is 2026-10-05
       And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-10
-      And a "Utilities" refill of $100.00 dated 2026-10-01
       And the "Utilities" category has $130.00 remaining
     When I go to the "Utilities" category's details screen
       And I open the +$100.00 transaction
@@ -39,7 +38,8 @@ Feature: Monthly refills
     Then the budget overview should show "Utilities" with $30.00 remaining
 
   Scenario: Opening a refill
-    Given a "Utilities" refill of $100.00 dated 2026-10-01
+    Given today is 2026-10-15
+      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-10
     When I open the Transactions tab
       And I open the +$100.00 transaction
     Then it should show a +$100.00 "Monthly refill" for "Utilities" dated 10/1/26 with no account
