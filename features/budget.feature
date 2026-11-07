@@ -78,3 +78,8 @@ Feature: Budget management
   Scenario: Offer the app for installation
     When I go to the home page
     Then the browser should consider the app installable
+
+  Scenario: Removing the balance (`remaining`) field that an older version stored
+    Given the "Groceries" category was stored with $40.00 remaining by an older version
+    When I reopen the app
+    Then the "Groceries" category should no longer store a remaining amount

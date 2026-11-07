@@ -1,3 +1,20 @@
+import database from './database'
+import { listCategories } from './categories'
+
+/**
+ * Delete the balance that versions before budget-data 4.0.0 stored on each
+ * category as `remaining`. Balances are summed from transactions now, so
+ * nothing reads it.
+ */
+export const removeStoredBalances = async () => {
+  const categories = await listCategories()
+  for (const { remaining, ...category } of categories) {
+    if (remaining !== undefined) {
+      await database.update(category)
+    }
+  }
+}
+
 export const checkLocalStorageForData = async () => {
   const budgetFromLocalStorage = localStorage.getItem('budget');
   if (budgetFromLocalStorage) {

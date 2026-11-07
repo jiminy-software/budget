@@ -116,6 +116,32 @@ Given(
   }
 );
 
+// Versions before budget-data 4.0.0 stored a category's balance as
+// `remaining`. Nothing reads it now, so it doesn't change the balance.
+Given(
+  /^the "([^"]*)" category was stored with \$([0-9.]+) remaining by an older version$/,
+  async function (name, dollars) {
+    await this.updateSeededDoc(await this.ensureCategory(name), {
+      remaining: dollarsToCents(dollars),
+    });
+  }
+);
+
+Then(
+  /^the "([^"]*)" category should no longer store a remaining amount$/,
+  async function (name) {
+    const id = this.categoryIds[name];
+    const category = await this.page.evaluate(
+      (docId) => window.__budgetDb.get(docId),
+      id
+    );
+    assert.ok(
+      !('remaining' in category),
+      `Expected no stored remaining amount, but it has ${category.remaining}`
+    );
+  }
+);
+
 Given('an account named {string}', async function (name) {
   await this.seedAccount(name);
 });
