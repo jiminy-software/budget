@@ -6,7 +6,7 @@ back, so when two devices each record an expense offline in one category,
 the sync keeps only one of the subtractions. Step 5 of
 `docs/cross-device-syncing-options.md` showed it: $77.66 instead of $57.66.
 
-Status: in progress. Step 1 is done. It lands before sign-in, step 7 of
+Status: in progress. Steps 1 and 2 are done. It lands before sign-in, step 7 of
 that plan.
 
 ## Decisions
@@ -31,7 +31,7 @@ Each step is its own PR.
 
 - [x] **1. Publish budget-data 4.0.0.** In `forevermatt/budget-data`: drop
   `remaining` from categories, and define a balance as above.
-- [ ] **2. Derive balances.**
+- [x] **2. Derive balances.**
   - A function in `src/data/` sums each category's balance from
     `listTransactions()`. The budget overview reads it instead of
     `remaining`.

@@ -88,12 +88,14 @@ around it.
 - **Start-up.** `startUp` in `App.svelte` runs these in order, and the router
   stays unmounted until they finish, so no view renders a pre-refill
   balance:
-  1. `refillBudgetCategories` (`budget.js`): adds `budgeted` for each month
-     since `refilled`, capped at 100 months.
-  2. `recordDueRecurringTransactions`: records each recurring expense while
+  1. `removeStoredBalances` (`migration.js`): deletes the `remaining` that
+     versions before budget-data 4.0.0 stored on categories.
+  2. `refillBudgetCategories` (`budget.js`): records a refill of `budgeted`
+     for each month since `refilled`, capped at 100 months.
+  3. `recordDueRecurringTransactions`: records each recurring expense while
      its `nextDue` is today or earlier, saving `nextDue` after each one so an
      interrupted catch-up can't repeat a month.
-  3. The leftover-localStorage check in `migration.js`.
+  4. The leftover-localStorage check in `migration.js`.
 - **The expense flow.** The multi-screen flow (`/expense/new` through
   `/expense/review/`) builds up state in the `transactionInProgress` store,
   then saves once. The Review screen's "Repeats monthly" switch saves it as
