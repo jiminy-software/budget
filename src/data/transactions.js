@@ -1,5 +1,4 @@
 import { get, writable } from 'svelte/store'
-import { addAmountToBudgetCategory, subtractAmountFromBudgetCategory } from './budget'
 import database from './database'
 
 const ITEM_TYPE_PREFIX = 't'
@@ -27,33 +26,16 @@ export const getTransactionsForCategory = async (categoryId) => {
 }
 
 /**
- * Store a transaction and take its amounts out of the budget categories. The
- * one path by which an expense becomes real, whether entered by hand or
- * recorded from a recurring transaction.
+ * Store a transaction. The one path by which an expense becomes real, whether
+ * entered by hand or recorded from a recurring transaction. Category balances
+ * are summed from transactions, so storing it is all that takes the money out.
  */
-export const recordTransaction = async (transaction) => {
-  await addTransaction(transaction)
-
-  const categoryAmounts = transaction.categoryAmounts || {}
-  for (const categoryId in categoryAmounts) {
-    const categoryAmount = categoryAmounts[categoryId] || 0
-    await subtractAmountFromBudgetCategory(categoryId, categoryAmount)
-  }
-}
+export const recordTransaction = async (transaction) => addTransaction(transaction)
 
 /**
- * Put a transaction's amounts back in the budget categories they came out of,
- * then delete it: recordTransaction in reverse.
+ * Delete a transaction, which puts its amounts back in their categories.
  */
-export const unrecordTransaction = async (transaction) => {
-  const categoryAmounts = transaction.categoryAmounts || {}
-  for (const categoryId in categoryAmounts) {
-    const categoryAmount = categoryAmounts[categoryId] || 0
-    await addAmountToBudgetCategory(categoryId, categoryAmount)
-  }
-
-  await deleteTransaction(transaction._id)
-}
+export const unrecordTransaction = async (transaction) => deleteTransaction(transaction._id)
 
 export const savePendingTransaction = async () => {
   await recordTransaction(get(transactionInProgress))

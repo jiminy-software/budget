@@ -2,6 +2,7 @@
 import { formatMonthAndYear, getMonthProgress } from '../helpers/dates'
 import { formatMoney, formatMoneyAsWholeNumber } from '../helpers/numbers'
 import ErrorMessage from './ErrorMessage.svelte'
+import { getCategoryBalances } from '../data/budget'
 import { listCategories } from '../data/categories'
 import { onMount } from 'svelte'
 
@@ -11,7 +12,8 @@ const { elapsedPercent, daysLeft } = getMonthProgress()
 let categories = []
 
 onMount(async () => {
-  categories = await listCategories()
+  const [list, balances] = await Promise.all([listCategories(), getCategoryBalances()])
+  categories = list.map(category => ({ ...category, balance: balances[category._id] || 0 }))
 })
 
 /**
@@ -21,9 +23,9 @@ onMount(async () => {
  * same comparison the pace line draws down the list. An overspent one fills
  * red inward from the right instead, in proportion to the overspend.
  */
-const describeEnvelope = ({ budgeted, remaining }) => {
+const describeEnvelope = ({ budgeted, balance }) => {
   const total = Number(budgeted) || 0
-  const left = Number(remaining) || 0
+  const left = balance
   const percentLeft = (total === 0) ? ((left > 0) ? 100 : 0) : ((left / total) * 100)
 
   if (left < 0) {
@@ -46,7 +48,7 @@ const describeEnvelope = ({ budgeted, remaining }) => {
   }
 }
 
-$: totalRemaining = categories.reduce((total, { remaining }) => total + (Number(remaining) || 0), 0)
+$: totalRemaining = categories.reduce((total, { balance }) => total + balance, 0)
 </script>
 
 <style>
@@ -225,7 +227,7 @@ $: totalRemaining = categories.reduce((total, { remaining }) => total + (Number(
       <div class="category-row-content">
         <span class="category-name">{ category.name }</span>
         <span class="category-amounts">
-          <span class="category-available">{ formatMoney(category.remaining) }</span>
+          <span class="category-available">{ formatMoney(category.balance) }</span>
           <span class="category-budgeted">/&nbsp;{ formatMoneyAsWholeNumber(category.budgeted) }</span>
         </span>
       </div>

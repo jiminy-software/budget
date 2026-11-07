@@ -14,9 +14,10 @@ Feature: Transactions tab
       And I should see a $40.00 transaction
 
   Scenario: List transactions newest first
-    Given a $12.34 "Groceries" expense at "Corner Store" from "Checking" dated two days ago
-      And a $20.00 "Groceries" expense at "Farm Stand" from "Checking" dated yesterday
-      And an $8.00 "Groceries" expense at "Bakery" from "Checking" dated today
+    Given today is 2026-10-15
+      And a $12.34 "Groceries" expense at "Corner Store" from "Checking" dated 2026-10-13
+      And a $20.00 "Groceries" expense at "Farm Stand" from "Checking" dated 2026-10-14
+      And an $8.00 "Groceries" expense at "Bakery" from "Checking" dated 2026-10-15
     When I open the Transactions tab
     Then the transactions list should show "Bakery", then "Farm Stand", then "Corner Store"
 

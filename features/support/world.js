@@ -1,7 +1,11 @@
 const { setWorldConstructor } = require('@cucumber/cucumber');
 const puppeteer = require('puppeteer');
 const { randomUUID } = require('crypto');
-const { timestampForDay, yearMonthMonthsAgo } = require('./conversions');
+const {
+  timestampDaysAgo,
+  timestampForDay,
+  yearMonthMonthsAgo,
+} = require('./conversions');
 const { COUCHDB_AUTH, createScenarioDb, deleteScenarioDb } = require('./couchdb');
 
 const BASE_URL = 'http://localhost:5000';
@@ -213,11 +217,58 @@ class CustomWorld {
     return id;
   }
 
-  async seedCategory(name, { budgeted, remaining, refilled }) {
+  async seedCategory(name, { budgeted, balance, refilled }) {
     const id = `c-${randomUUID()}`;
-    await this.seed({ _id: id, name, budgeted, remaining, refilled });
+    await this.seed({ _id: id, name, budgeted, refilled });
     this.categoryIds[name] = id;
+    if (balance) {
+      await this.setCategoryBalance(id, balance);
+    }
     return id;
+  }
+
+  // A category as the app leaves it right after refilling: its balance is
+  // that month's refill of the budgeted amount.
+  async seedRefilledCategory(name, { budgeted, refilled }) {
+    const id = await this.seedCategory(name, { budgeted, refilled });
+    await this.seedRefill({
+      categoryId: id,
+      amount: budgeted,
+      day: `${refilled}-01`,
+    });
+    return id;
+  }
+
+  // A category's balance is summed from its transactions, so this sizes a
+  // "Starting balance" transaction to make the sum come to the given cents,
+  // whatever the transactions seeded so far add up to. The app never makes
+  // one; it stands for whatever history would have left that balance.
+  async setCategoryBalance(categoryId, cents) {
+    await this.ensureAppLoaded();
+    await this.page.evaluate(
+      async (categoryId, cents, timestamp) => {
+        const db = window.__budgetDb;
+        const _id = `t-${categoryId}-start`;
+        const { rows } = await db.allDocs({
+          startkey: 't-',
+          endkey: 't.',
+          include_docs: true,
+        });
+        const existing = rows.find((row) => row.id === _id);
+        const others = rows
+          .filter((row) => row.id !== _id)
+          .reduce((sum, { doc }) => sum + (doc.categoryAmounts[categoryId] || 0), 0);
+        const amount = -cents - others;
+        await db.put({
+          ...(existing ? existing.doc : { _id, who: 'Starting balance', timestamp }),
+          amountTotal: amount,
+          categoryAmounts: { [categoryId]: amount },
+        });
+      },
+      categoryId,
+      cents,
+      timestampDaysAgo(1)
+    );
   }
 
   // The account named, seeded if the scenario has not seeded it itself.
@@ -225,15 +276,17 @@ class CustomWorld {
     return this.accountIds[name] || this.seedAccount(name);
   }
 
-  // As ensureAccount; a category seeded here has $100.00 budgeted and
-  // remaining, refilled this month.
+  // As ensureAccount; a category seeded here has $100.00 budgeted and this
+  // month's $100.00 refill. "This month" is the browser's, frozen or not, so
+  // the refill's date doesn't depend on when the suite runs.
   async ensureCategory(name) {
     return (
       this.categoryIds[name] ||
-      this.seedCategory(name, {
+      this.seedRefilledCategory(name, {
         budgeted: 10000,
-        remaining: 10000,
-        refilled: yearMonthMonthsAgo(0),
+        refilled: this.frozenDate
+          ? this.frozenDate.slice(0, 7)
+          : yearMonthMonthsAgo(0),
       })
     );
   }

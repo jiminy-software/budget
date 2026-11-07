@@ -10,6 +10,7 @@ const {
   completeReview,
   enterAmount,
   putFullAmountInCategory,
+  recordExpense,
   sayItWasPaidTo,
   startExpense,
 } = require('../support/expense-flow');
@@ -85,9 +86,8 @@ Given(
   /^a budget category "([^"]*)" with \$([0-9.]+) budgeted and remaining$/,
   async function (name, dollars) {
     const cents = dollarsToCents(dollars);
-    await this.seedCategory(name, {
+    await this.seedRefilledCategory(name, {
       budgeted: cents,
-      remaining: cents,
       refilled: yearMonthMonthsAgo(0),
     });
   }
@@ -99,9 +99,8 @@ Given(
   /^a budget category "([^"]*)" with \$([0-9.]+) budgeted$/,
   async function (name, dollars) {
     const cents = dollarsToCents(dollars);
-    await this.seedCategory(name, {
+    await this.seedRefilledCategory(name, {
       budgeted: cents,
-      remaining: cents,
       refilled: yearMonthMonthsAgo(0),
     });
   }
@@ -112,9 +111,8 @@ Given(
 Given(
   /^the "([^"]*)" category has \$([0-9.]+) remaining$/,
   async function (name, dollars) {
-    await this.updateSeededDoc(await this.ensureCategory(name), {
-      remaining: dollarsToCents(dollars),
-    });
+    const id = await this.ensureCategory(name);
+    await this.setCategoryBalance(id, dollarsToCents(dollars));
   }
 );
 
@@ -127,7 +125,7 @@ Given(
   async function (name, budgetedDollars, remainingDollars, monthsAgoWord) {
     await this.seedCategory(name, {
       budgeted: dollarsToCents(budgetedDollars),
-      remaining: dollarsToCents(remainingDollars),
+      balance: dollarsToCents(remainingDollars),
       refilled: yearMonthMonthsAgo(wordToNumber(monthsAgoWord)),
     });
   }
@@ -163,12 +161,8 @@ When('I complete the review step', async function () {
 When(
   /^I record a \$([0-9.]+) "([^"]*)" expense at "([^"]*)" from "([^"]*)"$/,
   async function (dollars, category, who, account) {
-    await startExpense(this);
-    await sayItWasPaidTo(this, who);
-    await chooseAccount(this, account);
-    await enterAmount(this, dollarsToCents(dollars));
-    await putFullAmountInCategory(this, category);
-    await completeReview(this);
+    const cents = dollarsToCents(dollars);
+    await recordExpense(this, { who, account, cents, category });
   }
 );
 

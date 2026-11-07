@@ -1,5 +1,5 @@
-import { getCategory, listCategories, updateCategory } from './categories'
-import { addTransaction } from './transactions'
+import { listCategories, updateCategory } from './categories'
+import { addTransaction, listTransactions } from './transactions'
 import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
 /**
@@ -33,24 +33,19 @@ const refillBudgetCategory = async (category) => {
 }
 
 /**
- * Add a month's refill to the category, and record it as a transaction dated
- * the 1st of that month. A refill puts money into the category, so its amount
- * is negative. A category with nothing budgeted gets no transaction.
+ * Record a month's refill of the category as a transaction dated the 1st of
+ * that month. A refill puts money into the category, so its amount is
+ * negative. A category with nothing budgeted gets no transaction.
  *
  * The transaction's ID is fixed by the category and month, so two devices
  * that refill the same month before they sync record the same transaction,
  * not two.
  */
 const recordRefill = async (categoryId, budgeted, yearMonth) => {
-  // The balance and month are saved in one write, before the transaction and
-  // not through recordTransaction, so an interruption can lose only the
-  // transaction. A month left unsaved would retry its fixed ID, get a 409,
-  // and block every later refill.
-  const { remaining } = await getCategory(categoryId)
-  await updateCategory(categoryId, {
-    remaining: (remaining || 0) + (budgeted || 0),
-    refilled: yearMonth,
-  })
+  // The month is saved first, because a month left unsaved would retry its
+  // fixed ID, get a 409, and block every later refill. An interruption between
+  // the two loses that month's refill.
+  await updateCategory(categoryId, { refilled: yearMonth })
   if (budgeted) {
     await addTransaction({
       _id: `t-${categoryId}-${yearMonth}`,
@@ -62,12 +57,17 @@ const recordRefill = async (categoryId, budgeted, yearMonth) => {
   }
 }
 
-export const addAmountToBudgetCategory = async (categoryId, amountToAdd) => {
-  const category = await getCategory(categoryId)
-  const oldRemaining = category.remaining || 0
-  const newRemaining = oldRemaining + amountToAdd
-  await updateCategory(categoryId, { remaining: newRemaining })
+/**
+ * Each category's balance, keyed by its ID: the negated sum of its amounts
+ * across all transactions, so expenses lower it and refills raise it. Nothing
+ * stores a balance, so two devices' changes can't overwrite each other's.
+ */
+export const getCategoryBalances = async () => {
+  const balances = {}
+  for (const { categoryAmounts } of await listTransactions()) {
+    for (const [categoryId, amount] of Object.entries(categoryAmounts || {})) {
+      balances[categoryId] = (balances[categoryId] || 0) - (amount || 0)
+    }
+  }
+  return balances
 }
-
-export const subtractAmountFromBudgetCategory = async (categoryId, amountToSubtract) =>
-  addAmountToBudgetCategory(categoryId, -amountToSubtract)
