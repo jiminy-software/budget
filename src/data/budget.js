@@ -9,11 +9,26 @@ const fillBudgetCategory = async ({ _id, budgeted }) => {
   await recordRefill(_id, budgeted, getCurrentYearMonthString())
 }
 
+/**
+ * The month of the category's latest refill transaction, if it has one. A
+ * category with no `refilled` month may still have one, if the app stopped
+ * after recording its first fill but before saving the month.
+ */
+const getLastRefillMonth = async (categoryId) => {
+  const prefix = `t-${categoryId}-`
+  return (await listTransactions())
+    .map(({ _id }) => _id.startsWith(prefix) ? _id.slice(prefix.length) : '')
+    .filter(month => /^\d{4}-\d{2}$/.test(month))
+    .sort()
+    .pop()
+}
+
 export const refillBudgetCategories = async () => {
   const categories = await listCategories()
   await Promise.allSettled(categories.map(async (category) => {
-    if (category.refilled) {
-      await refillBudgetCategory(category)
+    const refilled = category.refilled || await getLastRefillMonth(category._id)
+    if (refilled) {
+      await refillBudgetCategory({ ...category, refilled })
     } else {
       await fillBudgetCategory(category)
     }

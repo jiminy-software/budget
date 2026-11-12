@@ -94,11 +94,13 @@ around it.
      for each month since `refilled`, capped at 100 months.
   3. `recordDueRecurringTransactions`: records each recurring expense while
      its `nextDue` is today or earlier.
-
-  Both record each fixed-ID transaction before advancing `refilled` or
-  `nextDue`, and `recordFixedTransaction` counts a 409 as already recorded.
-  So a launch that stops partway finishes the month on the next one.
   4. The leftover-localStorage check in `migration.js`.
+
+  Steps 2 and 3 record each fixed-ID transaction before advancing `refilled`
+  or `nextDue`, and `recordFixedTransaction` counts a 409 as already
+  recorded, so a launch that stops partway finishes on the next one. A
+  category with no `refilled` but a refill transaction catches up from that
+  refill's month.
 - **The expense flow.** The multi-screen flow (`/expense/new` through
   `/expense/review/`) builds up state in the `transactionInProgress` store,
   then saves once. The Review screen's "Repeats monthly" switch saves it as

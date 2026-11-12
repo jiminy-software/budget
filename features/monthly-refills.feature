@@ -69,3 +69,10 @@ Feature: Monthly refills
       And the app stops after its first write while recording September's refill
     When I reopen the app
     Then the budget overview should show "Utilities" with $300.00 remaining
+
+  Scenario: Not skipping a month when the app stops partway through a new category's first fill
+    Given today is 2026-11-15
+      And a budget category "Utilities" with $100.00 budgeted per month, never refilled
+      And its first fill was recorded in September, without saving its last-refilled month
+    When I reopen the app
+    Then the budget overview should show "Utilities" with $300.00 remaining

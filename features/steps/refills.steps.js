@@ -15,6 +15,39 @@ Given(
   }
 );
 
+// A category whose amount was just set, before its first fill.
+Given(
+  /^a budget category "([^"]*)" with \$([0-9.]+) budgeted per month, never refilled$/,
+  async function (name, budgetedDollars) {
+    await this.seedCategory(name, { budgeted: dollarsToCents(budgetedDollars) });
+  }
+);
+
+// What a first fill leaves when the app stops between its two writes: the
+// refill transaction for the named month, the latest one on or before today,
+// with no `refilled` month saved.
+Given(
+  /^its first fill was recorded in (\w+), without saving its last-refilled month$/,
+  async function (monthName) {
+    const categoryId = this.lastCategoryId;
+    const { budgeted } = await this.readDoc(categoryId);
+    const [year, month] = this.frozenDate.split('-').map(Number);
+    for (let monthsAgo = 0; monthsAgo < 12; monthsAgo++) {
+      const day = new Date(year, month - 1 - monthsAgo, 1);
+      if (day.toLocaleString('en-US', { month: 'long' }) === monthName) {
+        const mm = String(day.getMonth() + 1).padStart(2, '0');
+        await this.seedRefill({
+          categoryId,
+          amount: budgeted,
+          day: `${day.getFullYear()}-${mm}-01`,
+        });
+        return;
+      }
+    }
+    throw new Error(`Unrecognized month: "${monthName}"`);
+  }
+);
+
 // Recording a refill takes two writes, the transaction and the category's
 // last-refilled month. This stops the app after the first, whichever that is,
 // by failing every later write to the category's documents during one launch.
