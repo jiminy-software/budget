@@ -130,11 +130,7 @@ Given(
 Then(
   /^the "([^"]*)" category should no longer store a remaining amount$/,
   async function (name) {
-    const id = this.categoryIds[name];
-    const category = await this.page.evaluate(
-      (docId) => window.__budgetDb.get(docId),
-      id
-    );
+    const category = await this.readDoc(this.categoryIds[name]);
     assert.ok(
       !('remaining' in category),
       `Expected no stored remaining amount, but it has ${category.remaining}`

@@ -38,9 +38,12 @@ const setTimeoutsOn = (page) => {
 class CustomWorld {
   constructor() {
     // The accounts and categories seeded so far, by the name the scenario
-    // gave them, so a later step can refer to one by that name.
+    // gave them, so a later step can refer to one by that name, or by "its"
+    // for the category seeded last.
     this.accountIds = {};
     this.categoryIds = {};
+    this.lastCategoryId = null;
+    this.lastRecurringId = null;
   }
 
   async launch() {
@@ -197,6 +200,47 @@ class CustomWorld {
     await this.page.evaluate((d) => window.__budgetDb.put(d), doc);
   }
 
+  // Reloads the app once with every write after the first failing, among the
+  // documents whose IDs contain the given one: a category or recurring expense,
+  // and the transactions whose fixed IDs name it. As if the app had stopped
+  // after that first write. The
+  // database is patched as the app hands it to the test hook, which is the
+  // same instance the app writes through.
+  async launchStoppingAfterFirstWrite(sourceId) {
+    const { identifier } = await this.page.evaluateOnNewDocument((id) => {
+      let writes = 0;
+      Object.defineProperty(window, '__budgetDb', {
+        configurable: true,
+        set(db) {
+          const put = db.put.bind(db);
+          db.put = (doc, ...rest) => {
+            if (String(doc._id).includes(id) && ++writes > 1) {
+              return Promise.reject(new Error('The app stopped'));
+            }
+            return put(doc, ...rest);
+          };
+          Object.defineProperty(window, '__budgetDb', {
+            configurable: true,
+            writable: true,
+            value: db,
+          });
+        },
+      });
+    }, sourceId);
+    try {
+      await this.page.reload({ waitUntil: 'networkidle0' });
+      await this.page.waitForSelector('h2');
+    } finally {
+      await this.page.removeScriptToEvaluateOnNewDocument(identifier);
+    }
+  }
+
+  // The document as the app stored it.
+  async readDoc(id) {
+    await this.ensureAppLoaded();
+    return this.page.evaluate((docId) => window.__budgetDb.get(docId), id);
+  }
+
   // Changes fields of a document already seeded, keeping the rest.
   async updateSeededDoc(id, changes) {
     await this.ensureAppLoaded();
@@ -221,6 +265,7 @@ class CustomWorld {
     const id = `c-${randomUUID()}`;
     await this.seed({ _id: id, name, budgeted, refilled });
     this.categoryIds[name] = id;
+    this.lastCategoryId = id;
     if (balance) {
       await this.setCategoryBalance(id, balance);
     }
@@ -323,8 +368,9 @@ class CustomWorld {
     amountTotal,
     nextDue,
   }) {
+    this.lastRecurringId = `r-${randomUUID()}`;
     await this.seed({
-      _id: `r-${randomUUID()}`,
+      _id: this.lastRecurringId,
       who,
       accountId,
       amountTotal,

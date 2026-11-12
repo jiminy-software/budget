@@ -61,3 +61,18 @@ Feature: Monthly refills
       And both devices sync
     Then each device should show just one "Monthly refill" transaction dated 10/1/26
       And each device's budget overview should show "Utilities" with $130.00 remaining
+
+  Scenario: Not losing a refill when the app stops partway through recording it
+    Given today is 2026-10-15
+      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-08
+      And the "Utilities" category has $100.00 remaining
+      And the app stops after its first write while recording September's refill
+    When I reopen the app
+    Then the budget overview should show "Utilities" with $300.00 remaining
+
+  Scenario: Not skipping a month when the app stops partway through a new category's first fill
+    Given today is 2026-11-15
+      And a budget category "Utilities" with $100.00 budgeted per month, never refilled
+      And its first fill was recorded in September, without saving its last-refilled month
+    When I reopen the app
+    Then the budget overview should show "Utilities" with $300.00 remaining

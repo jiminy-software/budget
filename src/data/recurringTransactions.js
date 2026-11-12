@@ -1,7 +1,7 @@
 import { get } from 'svelte/store'
 import database from './database'
 import { setError } from './errors'
-import { recordTransaction, startNewPendingTransaction, transactionInProgress } from './transactions'
+import { recordFixedTransaction, startNewPendingTransaction, transactionInProgress } from './transactions'
 import { formatDateISO8601, getNoonTimestamp, getSameDayNextMonth, getTodayISO8601 } from '../helpers/dates'
 
 const ITEM_TYPE_PREFIX = 'r'
@@ -48,8 +48,7 @@ export const savePendingRecurringTransaction = async () => {
 /**
  * Record every recurring transaction that is due, once for each date up to
  * today that it has not been recorded for. Runs at app load, after the
- * refill, and after a recurring transaction is saved. One at a time, since
- * two of them may draw on the same category.
+ * refill, and after a recurring transaction is saved.
  */
 export const recordDueRecurringTransactions = async () => {
   const today = getTodayISO8601()
@@ -66,26 +65,23 @@ export const recordDueRecurringTransactions = async () => {
 /**
  * Each occurrence's ID is fixed by the recurring transaction and its date, so
  * two devices that record it before they sync record the same transaction,
- * not two.
+ * not two. It's recorded before `nextDue` is saved, so a launch that stops
+ * between the two finishes the occurrence next time instead of skipping it.
  */
 const recordWhileDue = async (recurringTransaction, today) => {
   const { _id, who, accountId, amountTotal, categoryAmounts, note } = recurringTransaction
   let nextDue = recurringTransaction.nextDue
   for (let i = 0; (nextDue <= today) && (i < 100); i++) {
-    const due = nextDue
-    // Saved before the occurrence is recorded, so an interruption can lose
-    // only that occurrence. Saved after, it would retry the fixed ID, get a
-    // 409, and block every later occurrence.
-    nextDue = getSameDayNextMonth(due)
-    await updateRecurringTransaction(_id, { nextDue })
-    await recordTransaction({
-      _id: `t-${_id}-${due}`,
+    await recordFixedTransaction({
+      _id: `t-${_id}-${nextDue}`,
       who,
       accountId,
       amountTotal,
       categoryAmounts,
       note,
-      timestamp: getNoonTimestamp(due),
+      timestamp: getNoonTimestamp(nextDue),
     })
+    nextDue = getSameDayNextMonth(nextDue)
+    await updateRecurringTransaction(_id, { nextDue })
   }
 }

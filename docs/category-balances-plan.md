@@ -6,7 +6,7 @@ back, so when two devices each record an expense offline in one category,
 the sync keeps only one of the subtractions. Step 5 of
 `docs/cross-device-syncing-options.md` showed it: $77.66 instead of $57.66.
 
-Status: in progress. Steps 1 and 2 are done. It lands before sign-in, step 7 of
+Status: in progress. Steps 1 to 3 are done. It lands before sign-in, step 7 of
 that plan.
 
 ## Decisions
@@ -42,7 +42,7 @@ Each step is its own PR.
   - The UI tests seed a full category as this month's refill, and any other
     balance as a test-only "Starting balance" transaction.
   - The README and `AGENTS.md` move to budget-data 4.0.0.
-- [ ] **3. Simplify catch-up.** The refill and the recurring catch-up insert
+- [x] **3. Simplify catch-up.** The refill and the recurring catch-up insert
   first, count a 409 as recorded, then advance `refilled` or `nextDue`. This
   replaces the write-order workarounds from sync steps 2 and 3.
 - [ ] **4. Check speed.** Summing every transaction on each render should be

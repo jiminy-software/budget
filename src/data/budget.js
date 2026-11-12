@@ -1,5 +1,5 @@
 import { listCategories, updateCategory } from './categories'
-import { addTransaction, listTransactions } from './transactions'
+import { listTransactions, recordFixedTransaction } from './transactions'
 import { getCurrentYearMonthString, getMonthAfter, getNoonTimestamp, isInPast } from '../helpers/dates'
 
 /**
@@ -9,11 +9,26 @@ const fillBudgetCategory = async ({ _id, budgeted }) => {
   await recordRefill(_id, budgeted, getCurrentYearMonthString())
 }
 
+/**
+ * The month of the category's latest refill transaction, if it has one. A
+ * category with no `refilled` month may still have one, if the app stopped
+ * after recording its first fill but before saving the month.
+ */
+const getLastRefillMonth = async (categoryId) => {
+  const prefix = `t-${categoryId}-`
+  return (await listTransactions())
+    .map(({ _id }) => _id.startsWith(prefix) ? _id.slice(prefix.length) : '')
+    .filter(month => /^\d{4}-\d{2}$/.test(month))
+    .sort()
+    .pop()
+}
+
 export const refillBudgetCategories = async () => {
   const categories = await listCategories()
   await Promise.allSettled(categories.map(async (category) => {
-    if (category.refilled) {
-      await refillBudgetCategory(category)
+    const refilled = category.refilled || await getLastRefillMonth(category._id)
+    if (refilled) {
+      await refillBudgetCategory({ ...category, refilled })
     } else {
       await fillBudgetCategory(category)
     }
@@ -39,15 +54,12 @@ const refillBudgetCategory = async (category) => {
  *
  * The transaction's ID is fixed by the category and month, so two devices
  * that refill the same month before they sync record the same transaction,
- * not two.
+ * not two. It's recorded before the month is saved, so a launch that stops
+ * between the two finishes the month next time instead of skipping it.
  */
 const recordRefill = async (categoryId, budgeted, yearMonth) => {
-  // The month is saved first, because a month left unsaved would retry its
-  // fixed ID, get a 409, and block every later refill. An interruption between
-  // the two loses that month's refill.
-  await updateCategory(categoryId, { refilled: yearMonth })
   if (budgeted) {
-    await addTransaction({
+    await recordFixedTransaction({
       _id: `t-${categoryId}-${yearMonth}`,
       who: 'Monthly refill',
       amountTotal: -budgeted,
@@ -55,6 +67,7 @@ const recordRefill = async (categoryId, budgeted, yearMonth) => {
       timestamp: getNoonTimestamp(`${yearMonth}-01`),
     })
   }
+  await updateCategory(categoryId, { refilled: yearMonth })
 }
 
 /**
