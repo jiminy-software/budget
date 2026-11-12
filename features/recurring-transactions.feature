@@ -69,3 +69,11 @@ Feature: Recurring transactions
       And both devices sync
     Then each device should show just one $80.00 transaction dated 3/1/26
       And each device's budget overview should show "Phone" with $20.00 remaining
+
+  Scenario: Not losing a recurring expense when the app stops partway through recording it
+    Given today is 2026-03-15
+      And the "Phone" category has $100.00 remaining
+      And a recurring $80.00 "Phone" expense next due 2026-03-01
+      And the app stops after its first write while recording it
+    When I reopen the app
+    Then the budget overview should show "Phone" with $20.00 remaining

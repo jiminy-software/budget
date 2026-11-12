@@ -93,8 +93,11 @@ around it.
   2. `refillBudgetCategories` (`budget.js`): records a refill of `budgeted`
      for each month since `refilled`, capped at 100 months.
   3. `recordDueRecurringTransactions`: records each recurring expense while
-     its `nextDue` is today or earlier, saving `nextDue` after each one so an
-     interrupted catch-up can't repeat a month.
+     its `nextDue` is today or earlier.
+
+  Both record each fixed-ID transaction before advancing `refilled` or
+  `nextDue`, and `recordFixedTransaction` counts a 409 as already recorded.
+  So a launch that stops partway finishes the month on the next one.
   4. The leftover-localStorage check in `migration.js`.
 - **The expense flow.** The multi-screen flow (`/expense/new` through
   `/expense/review/`) builds up state in the `transactionInProgress` store,

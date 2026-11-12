@@ -26,15 +26,14 @@ export const getTransactionsForCategory = async (categoryId) => {
 }
 
 /**
- * Store a transaction. The one path by which an expense becomes real, whether
- * entered by hand or recorded from a recurring transaction. Category balances
- * are summed from transactions, so storing it is all that takes the money out.
+ * Store a transaction entered by hand. Category balances are summed from
+ * transactions, so storing it is all that takes the money out.
  */
 export const recordTransaction = async (transaction) => addTransaction(transaction)
 
 /**
- * Record a transaction whose ID is fixed by where it came from, such as a
- * month's refill. A 409 means it's already recorded, by sync or by a launch
+ * Record a transaction whose ID is fixed by where it came from: a month's
+ * refill, or a recurring expense's occurrence. A 409 means it's already recorded, by sync or by a launch
  * that stopped before noting it, so that counts as done.
  */
 export const recordFixedTransaction = async (transaction) => {

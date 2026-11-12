@@ -43,6 +43,7 @@ class CustomWorld {
     this.accountIds = {};
     this.categoryIds = {};
     this.lastCategoryId = null;
+    this.lastRecurringId = null;
   }
 
   async launch() {
@@ -199,11 +200,13 @@ class CustomWorld {
     await this.page.evaluate((d) => window.__budgetDb.put(d), doc);
   }
 
-  // Reloads the app once with every write to the given category's documents
-  // after the first one failing, as if the app had stopped there. The
+  // Reloads the app once with every write after the first failing, among the
+  // documents whose IDs contain the given one: a category or recurring expense,
+  // and the transactions whose fixed IDs name it. As if the app had stopped
+  // after that first write. The
   // database is patched as the app hands it to the test hook, which is the
   // same instance the app writes through.
-  async launchStoppingAfterFirstWrite(categoryId) {
+  async launchStoppingAfterFirstWrite(sourceId) {
     const { identifier } = await this.page.evaluateOnNewDocument((id) => {
       let writes = 0;
       Object.defineProperty(window, '__budgetDb', {
@@ -223,7 +226,7 @@ class CustomWorld {
           });
         },
       });
-    }, categoryId);
+    }, sourceId);
     try {
       await this.page.reload({ waitUntil: 'networkidle0' });
       await this.page.waitForSelector('h2');
@@ -365,8 +368,9 @@ class CustomWorld {
     amountTotal,
     nextDue,
   }) {
+    this.lastRecurringId = `r-${randomUUID()}`;
     await this.seed({
-      _id: `r-${randomUUID()}`,
+      _id: this.lastRecurringId,
       who,
       accountId,
       amountTotal,

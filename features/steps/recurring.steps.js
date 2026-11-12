@@ -50,6 +50,13 @@ Given(
   }
 );
 
+// Recording an occurrence takes two writes, the transaction and the recurring
+// expense's next due date. Like the refill step of the same kind, this stops
+// the app after the first, whichever that is.
+Given('the app stops after its first write while recording it', async function () {
+  await this.launchStoppingAfterFirstWrite(this.lastRecurringId);
+});
+
 // A fresh load, which is when the app records whatever has fallen due. The
 // heading is the router's, so waiting for it waits out the start-up the
 // router is held behind.
