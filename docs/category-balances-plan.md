@@ -6,7 +6,7 @@ back, so when two devices each record an expense offline in one category,
 the sync keeps only one of the subtractions. Step 5 of
 `docs/cross-device-syncing-options.md` showed it: $77.66 instead of $57.66.
 
-Status: in progress. Steps 1 to 3 are done. It lands before sign-in, step 7 of
+Status: in progress. Steps 1 to 4 are done. It lands before sign-in, step 7 of
 that plan.
 
 ## Decisions
@@ -45,9 +45,17 @@ Each step is its own PR.
 - [x] **3. Simplify catch-up.** The refill and the recurring catch-up insert
   first, count a 409 as recorded, then advance `refilled` or `nextDue`. This
   replaces the write-order workarounds from sync steps 2 and 3.
-- [ ] **4. Check speed.** Summing every transaction on each render should be
-  fine for years of data. Time it with about 5,000 transactions, and add a
-  PouchDB `_sum` view only if it's slow.
+- [x] **4. Check speed.** The target was the overview taking at most 500 ms
+  longer with 5,000 transactions than with none. Timed in headless Chrome,
+  with the CPU at full speed and slowed 4x as for a mid-range phone:
+  - With the default `idb` adapter it took 581 ms and 1,859 ms longer.
+    Nearly all of that is reading the documents; adding them up takes 4 ms.
+  - A `_sum` view was no faster, since PouchDB reduces every row on each
+    grouped query.
+  - The `indexeddb` adapter reads 3 to 4 times faster: 252 ms and 641 ms
+    longer. The app now uses it, under a new database name, so devices
+    start empty. Check the overview on a real phone; if it's too slow,
+    cache the balances per device in a `_local` document.
 - [ ] **5. Remove the `remaining` clean-up** in a later release, once every
   device in use has opened a version that ran it.
 
