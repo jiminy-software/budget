@@ -33,6 +33,21 @@ export const getTransactionsForCategory = async (categoryId) => {
 export const recordTransaction = async (transaction) => addTransaction(transaction)
 
 /**
+ * Record a transaction whose ID is fixed by where it came from, such as a
+ * month's refill. A 409 means it's already recorded, by sync or by a launch
+ * that stopped before noting it, so that counts as done.
+ */
+export const recordFixedTransaction = async (transaction) => {
+  try {
+    await addTransaction(transaction)
+  } catch (error) {
+    if (error.status !== 409) {
+      throw error
+    }
+  }
+}
+
+/**
  * Delete a transaction, which puts its amounts back in their categories.
  */
 export const unrecordTransaction = async (transaction) => deleteTransaction(transaction._id)

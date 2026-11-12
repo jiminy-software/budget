@@ -15,6 +15,24 @@ Given(
   }
 );
 
+// Recording a refill takes two writes, the transaction and the category's
+// last-refilled month. This stops the app after the first, whichever that is,
+// by failing every later write to the category's documents during one launch.
+Given(
+  /^the app stops after its first write while recording (\w+)'s refill$/,
+  async function (monthName) {
+    const categoryId = this.lastCategoryId;
+    const { refilled } = await this.readDoc(categoryId);
+    const [year, month] = refilled.split('-').map(Number);
+    assert.strictEqual(
+      new Date(year, month, 1).toLocaleString('en-US', { month: 'long' }),
+      monthName,
+      `The month after ${refilled}`
+    );
+    await this.launchStoppingAfterFirstWrite(categoryId);
+  }
+);
+
 // A refill is money into a category, which the list marks with a plus sign.
 // The date is the compact form the list shows, e.g. "10/1/26".
 Then(
