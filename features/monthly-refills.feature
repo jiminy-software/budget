@@ -64,8 +64,8 @@ Feature: Monthly refills
 
   Scenario: Not losing a refill when the app stops partway through recording it
     Given today is 2026-10-15
-      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-09
+      And a budget category "Utilities" with $100.00 budgeted per month, last refilled 2026-08
       And the "Utilities" category has $100.00 remaining
-      And the app stops after its first write while recording October's refill
+      And the app stops after its first write while recording September's refill
     When I reopen the app
-    Then the budget overview should show "Utilities" with $200.00 remaining
+    Then the budget overview should show "Utilities" with $300.00 remaining
