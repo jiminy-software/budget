@@ -72,8 +72,8 @@ Feature: Recurring transactions
 
   Scenario: Not losing a recurring expense when the app stops partway through recording it
     Given today is 2026-03-15
-      And the "Phone" category has $100.00 remaining
-      And a recurring $80.00 "Phone" expense next due 2026-03-01
+      And the "Phone" category has $200.00 remaining
+      And a recurring $80.00 "Phone" expense next due 2026-02-01
       And the app stops after its first write while recording it
     When I reopen the app
-    Then the budget overview should show "Phone" with $20.00 remaining
+    Then the budget overview should show "Phone" with $40.00 remaining
