@@ -1,7 +1,13 @@
 import { clearError, setError } from './errors'
 import PouchDB from 'pouchdb-browser'
+import IndexedDbAdapter from 'pouchdb-adapter-indexeddb'
 
-const pouchDb = new PouchDB('budget')
+// The indexeddb adapter reads several times faster than the default idb one,
+// which matters because balances are summed from every transaction. It can't
+// open the database idb made under the old name, 'budget', so this one is
+// new, and named for its adapter. Data in the old one is left where it is.
+PouchDB.plugin(IndexedDbAdapter)
+const pouchDb = new PouchDB('budget_indexeddb', { adapter: 'indexeddb' })
 
 // Test hook: lets the UI tests seed data directly (see features/support/).
 // Gated to local hosts so it is never exposed by the deployed app. It cannot
