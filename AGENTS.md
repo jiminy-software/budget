@@ -108,10 +108,12 @@ around it.
   `window.onunhandledrejection` handler is the global catch-all. A fault
   injected from a function defined inside Puppeteer's `page.evaluate` never
   reaches that handler, so install one with `evaluateOnNewDocument`.
-- **Sync.** `configureSync` in `database.js` syncs live with the CouchDB
-  database `userdb-<hex(username)>` (CouchDB's `couch_peruser` convention),
-  using Basic Auth. It's unfinished and deliberately unreachable from the
-  UI: only typing `#/settings` gets there. The planned design and its
+- **Sync.** The Settings screen signs in with `signIn` in `database.js`,
+  which gets CouchDB's HttpOnly session cookie, and `configureSync` then
+  syncs live with the CouchDB database `userdb-<hex(username)>` (CouchDB's
+  `couch_peruser` convention). The cookie is `SameSite=Strict`, so the app
+  and CouchDB have to be on one site. It's unfinished and deliberately
+  unreachable from the UI: only typing `#/settings` gets there. The planned design and its
   release steps are in `docs/cross-device-syncing-options.md`, which tracks
   the status of that work.
 - **Test hook.** `database.js` exposes the database as `window.__budgetDb`,
@@ -175,7 +177,10 @@ tests; the suite is the safety net.
 - **Devices and syncing.** `addSecondDevice` opens the app in a browser
   context of its own, and `onSecondDevice` runs steps against it.
   `syncDevices` syncs each device once, with PouchDB's own replication,
-  through a CouchDB database made for the scenario. Only scenarios that sync
+  through a CouchDB database made for the scenario. `signInToSync` signs a
+  device in through the Settings screen instead, as a CouchDB user made for
+  the scenario. In the container, Chrome maps `localhost:5984` to the `db`
+  service, so the session cookie stays same-site. Only scenarios that sync
   need CouchDB.
 
 ### Build and deploy

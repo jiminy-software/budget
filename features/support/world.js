@@ -6,7 +6,15 @@ const {
   timestampForDay,
   yearMonthMonthsAgo,
 } = require('./conversions');
-const { COUCHDB_AUTH, createScenarioDb, deleteScenarioDb } = require('./couchdb');
+const {
+  BROWSER_COUCHDB_URL,
+  CHROME_ARGS,
+  COUCHDB_AUTH,
+  createScenarioDb,
+  createScenarioUser,
+  deleteScenarioDb,
+  deleteScenarioUser,
+} = require('./couchdb');
 
 const BASE_URL = 'http://localhost:5000';
 
@@ -50,7 +58,7 @@ class CustomWorld {
     if (!this.browser) {
       this.browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', ...CHROME_ARGS],
       });
       this.page = await this.browser.newPage();
       setTimeoutsOn(this.page);
@@ -138,6 +146,73 @@ class CustomWorld {
           direction
         );
       }
+    }
+  }
+
+  // The family's shared login: a CouchDB user made for the scenario.
+  async ensureSyncUser() {
+    this.syncUser = this.syncUser || (await createScenarioUser());
+    return this.syncUser;
+  }
+
+  // Signs this device in through the Settings screen, with the user's own
+  // password unless another is given.
+  async signInToSync({ name, password }) {
+    await this.openApp('/settings');
+    const fields = {
+      '#sync-server': BROWSER_COUCHDB_URL,
+      '#sync-username': name,
+      '#sync-password': password,
+    };
+    for (const [selector, value] of Object.entries(fields)) {
+      // Set rather than typed, since the server and username come prefilled.
+      await this.page.$eval(
+        selector,
+        (el, v) => {
+          el.value = v;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        value
+      );
+    }
+    await this.clickNamedButton('save');
+  }
+
+  // Live sync has no "done", so this waits until both devices hold the same
+  // documents.
+  async waitForDevicesToMatch() {
+    const ids = (page) =>
+      page.evaluate(async () =>
+        (await window.__budgetDb.allDocs()).rows.map((row) => row.id).join()
+      );
+    const deadline = Date.now() + 10000;
+    while ((await ids(this.page)) !== (await ids(this.secondPage))) {
+      if (Date.now() > deadline) {
+        throw new Error('The two devices did not sync within 10 seconds.');
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+
+  // The error banner under the screen's header, by its title.
+  async waitForError(title) {
+    try {
+      await this.page.waitForFunction(
+        (t) =>
+          [...document.querySelectorAll('[role="alert"] .error-title')].some(
+            (el) => el.textContent.trim() === t
+          ),
+        { timeout: 5000 },
+        title
+      );
+    } catch (e) {
+      const shown = await this.page.evaluate(() => {
+        const alert = document.querySelector('[role="alert"]');
+        return alert ? `"${alert.textContent.trim()}"` : 'no error';
+      });
+      throw new Error(
+        `Expected the error "${title}", but the screen shows ${shown}`
+      );
     }
   }
 
@@ -798,6 +873,10 @@ class CustomWorld {
     if (this.remoteDbUrl) {
       await deleteScenarioDb(this.remoteDbUrl);
       this.remoteDbUrl = null;
+    }
+    if (this.syncUser) {
+      await deleteScenarioUser(this.syncUser);
+      this.syncUser = null;
     }
   }
 }

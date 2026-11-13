@@ -3,7 +3,7 @@
 Goal: one family's budget on several devices, with each family's data kept
 apart by the server, and no password prompt each time the app opens.
 
-Status: in progress. Steps 1 to 6 are done.
+Status: in progress. Steps 1 to 7 are done.
 
 ## Decisions
 
@@ -27,8 +27,10 @@ Status: in progress. Steps 1 to 6 are done.
 - **Signing in** takes a password once (`POST /_session`), which is never
   stored. After that, CouchDB's own `AuthSession` cookie carries the
   session. It's HttpOnly, set with `same_site = strict`, and
-  `allow_persistent_cookies = true`. Its `timeout` must be short enough that
-  CouchDB renews the cookie well inside Safari's 7-day cap.
+  `allow_persistent_cookies = true`. CouchDB (3.5.0, measured) renews the
+  cookie on the first request after a tenth of its `timeout` has passed. The
+  `timeout` is 10 days, so it renews within a day, and Safari's 7-day cap
+  allows 6 days without use.
 - **The app and CouchDB are sibling subdomains**, so the cookie is sent on
   cross-origin requests without a proxy, the same way locally and in
   production. Safari caps the cookie at 7 days because the two servers are
@@ -98,11 +100,11 @@ hidden until the last step.
 - [x] **6. Derive category balances from transactions.** Step 5 showed
   that two offline expenses in one category keep only one subtraction. See
   `docs/category-balances-plan.md`.
-- [ ] **7. Sign in with CouchDB's session cookie.** The Settings form posts
-  to `/_session`. `configureSync` drops the Basic Auth `fetch` wrapper for
-  `credentials: 'include'` and gets the username from `GET /_session`. Add
-  the cookie settings to `db-config/couchdb/docker.ini`, and check when
-  CouchDB renews the cookie.
+- [x] **7. Sign in with CouchDB's session cookie.** The Settings form posts
+  to `/_session`. `configureSync` drops the Basic Auth `fetch` wrapper, since
+  PouchDB already sends cookies, and gets the username from `GET /_session`.
+  The cookie settings are in `db-config/couchdb/docker.ini`. Sync stops at a
+  reload until step 8, and there is no sign-out.
 - [ ] **8. Resume sync at launch.** If `GET /_session` says the session is
   still valid, start sync. If not, keep working offline and show a "Sign in
   to sync" prompt that doesn't block the app.

@@ -20,3 +20,13 @@ Feature: Syncing
       And the second device records a $30.00 "Groceries" expense from "Checking"
       And both devices sync
     Then each device's budget overview should show "Groceries" with $50.00 remaining
+
+  Scenario: Signing in to sync
+    Given a $12.34 "Groceries" expense from "Checking"
+      And a second device
+    When both devices sign in to sync
+    Then the second device should show a $12.34 transaction
+
+  Scenario: Signing in with the wrong password
+    When I sign in to sync with the wrong password
+    Then I should see the error "Could not sign in"

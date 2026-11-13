@@ -36,33 +36,52 @@ const usernameToHex = (str) => {
 
 const perUserDbName = (username) => `userdb-${usernameToHex(username)}`
 
-// Configure live sync to CouchDB per-user database
-const configureSync = async (server, username, password) => {
+const serverUrl = (server) =>
+  (server || 'http://localhost:5984').replace(/\/$/, '')
+
+const sessionUrl = (server) => `${serverUrl(server)}/_session`
+
+// Signs in to CouchDB, which answers with its session cookie. The cookie is
+// HttpOnly, so nothing the app can read is kept, and the password goes no
+// further than this request. Throws with CouchDB's reason if it refuses.
+const signIn = async (server, username, password) => {
+  const response = await fetch(sessionUrl(server), {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: username, password }),
+  })
+  if (!response.ok) {
+    const { reason } = await response.json().catch(() => ({}))
+    throw new Error(reason || `The server answered ${response.status}`)
+  }
+}
+
+// The user the session cookie signs in, or null without a valid one.
+const getSessionUsername = async (server) => {
+  const response = await fetch(sessionUrl(server), { credentials: 'include' })
+  return (await response.json()).userCtx.name
+}
+
+// Starts live sync with the signed-in user's database. Resolves to false if
+// nobody is signed in, and rejects if the server can't be asked.
+const configureSync = async (server) => {
+  const username = await getSessionUsername(server)
+  if (!username) {
+    return false
+  }
+
   try {
-    // Basic defaults and cleanup
-    const trimmedServer = (server || 'http://localhost:5984').replace(/\/$/, '')
     if (currentSync && typeof currentSync.cancel === 'function') {
       currentSync.cancel()
       currentSync = null
     }
 
-    // Build remote DB URL
-    const dbName = perUserDbName(username)
-    const remoteUrl = `${trimmedServer}/${dbName}`
-
-    // Use custom fetch to set Basic Auth header without extra plugins
-    remoteDb = new PouchDB(remoteUrl, {
-      fetch: (url, opts = {}) => {
-        const options = { ...opts }
-        options.headers = new Headers(options.headers || {})
-        if (username && password) {
-          const token = btoa(`${username}:${password}`)
-          options.headers.set('Authorization', `Basic ${token}`)
-        }
-        return PouchDB.fetch(url, options)
-      },
-      skip_setup: false, // ensure the DB gets created if allowed by CouchDB
-    })
+    // PouchDB sends the session cookie itself. couch_peruser has already made
+    // the database, so skip_setup keeps a mistyped server from sending PouchDB
+    // off to create one.
+    const remoteUrl = `${serverUrl(server)}/${perUserDbName(username)}`
+    remoteDb = new PouchDB(remoteUrl, { skip_setup: true })
 
     // Start bidirectional live sync with retry
     currentSync = pouchDb.sync(remoteDb, { live: true, retry: true })
@@ -156,5 +175,6 @@ export default {
   get,
   insert,
   list,
+  signIn,
   update,
 }
