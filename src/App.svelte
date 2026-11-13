@@ -1,7 +1,7 @@
 <script>
 import { refillBudgetCategories } from './data/budget'
 import { recordDueRecurringTransactions } from './data/recurringTransactions'
-import { checkLocalStorageForData, removeStoredBalances } from './data/migration'
+import { checkLocalStorageForData } from './data/migration'
 import { setError } from './data/errors'
 import Router from 'svelte-spa-router'
 import routes from './views/routes'
@@ -9,7 +9,6 @@ import database from './data/database'
 
 const startUp = async () => {
   try {
-    await removeStoredBalances()
     await refillBudgetCategories()
     await recordDueRecurringTransactions()
     await checkLocalStorageForData()
