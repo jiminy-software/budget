@@ -3,7 +3,7 @@
 Goal: one family's budget on several devices, with each family's data kept
 apart by the server, and no password prompt each time the app opens.
 
-Status: in progress. Steps 1 to 5 are done.
+Status: in progress. Steps 1 to 6 are done.
 
 ## Decisions
 
@@ -95,7 +95,7 @@ hidden until the last step.
     PouchDB trying to create a database, and the error says "You are not a
     server admin". Step 7 should skip setup, since `couch_peruser` creates
     the database.
-- [ ] **6. Derive category balances from transactions.** Step 5 showed
+- [x] **6. Derive category balances from transactions.** Step 5 showed
   that two offline expenses in one category keep only one subtraction. See
   `docs/category-balances-plan.md`.
 - [ ] **7. Sign in with CouchDB's session cookie.** The Settings form posts
