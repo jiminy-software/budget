@@ -5,6 +5,7 @@ import DetailHeader from '../components/DetailHeader.svelte'
 import Form from '../components/Form.svelte'
 import { faCheck } from '@fortawesome/free-solid-svg-icons'
 import database from '../data/database'
+import { clearError, setError } from '../data/errors'
 import { push } from 'svelte-spa-router'
 
 let server = localStorage.getItem('sync.server') || 'http://localhost:5984'
@@ -12,16 +13,21 @@ let username = localStorage.getItem('sync.username') || ''
 let password = ''
 
 const onSyncFormSubmit = async () => {
-  // Persist settings
+  // The password is never stored: CouchDB's session cookie stands in for it.
   localStorage.setItem('sync.server', server)
   localStorage.setItem('sync.username', username)
-  // Do NOT store password in localStorage
 
-  // Start or restart sync
-  const succeeded = await database.configureSync(server, username, password)
-  if (succeeded) {
-    push(`/budget`)
+  try {
+    await database.signIn(server, username, password)
+    if (!(await database.configureSync(server))) {
+      throw new Error('The browser did not keep the session from this server.')
+    }
+  } catch (error) {
+    setError('Could not sign in', error.message)
+    return
   }
+  clearError()
+  push(`/budget`)
 }
 </script>
 

@@ -43,6 +43,25 @@ When('both devices sync', async function () {
   await this.syncDevices();
 });
 
+// Both sign in as the same family, and the app syncs from then on.
+When('both devices sign in to sync', async function () {
+  const user = await this.ensureSyncUser();
+  await this.onEachDevice(async () => {
+    await this.signInToSync(user);
+    await this.waitForBudgetOverview();
+  });
+  await this.waitForDevicesToMatch();
+});
+
+When('I sign in to sync with the wrong password', async function () {
+  const { name } = await this.ensureSyncUser();
+  await this.signInToSync({ name, password: 'not-the-password' });
+});
+
+Then('I should see the error {string}', async function (title) {
+  await this.waitForError(title);
+});
+
 Then(
   /^the second device should show an? \$([0-9,.]+) transaction$/,
   async function (dollars) {
